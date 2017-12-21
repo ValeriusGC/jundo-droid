@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/jundo-droid.iml" filepath="$PROJECT_DIR$/jundo-droid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jundo-droid-common/jundo-droid-common.iml" filepath="$PROJECT_DIR$/jundo-droid-common/jundo-droid-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/jundo-droid-sample/jundo-droid-sample.iml" filepath="$PROJECT_DIR$/jundo-droid-sample/jundo-droid-sample.iml" />
     </modules>
   </component>

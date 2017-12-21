@@ -1,1 +1,1 @@
-include ':jundo-droid-sample'
+include ':jundo-droid-sample', ':jundo-droid-common'
