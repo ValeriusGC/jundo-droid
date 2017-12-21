@@ -25,3 +25,48 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+def moxyVer = '1.5.3'
+def daggerVer = '2.14.1'
+def butterKnifeVer = '8.6.0'
+
+ext.libraries = [
+
+        // MOXY: https://github.com/Arello-Mobile/Moxy
+        moxy                    : 'com.arello-mobile:moxy:' + moxyVer,
+        moxyAppCompat           : 'com.arello-mobile:moxy-app-compat:' + moxyVer,
+        moxyApt                 : 'com.arello-mobile:moxy-compiler:' + moxyVer,
+
+        // Dagger DI: https://github.com/google/dagger
+        dagger                  : 'com.google.dagger:dagger:' + daggerVer,
+        daggerCompiler          : 'com.google.dagger:dagger-compiler:' + daggerVer,
+        daggerAndroid           : 'com.google.dagger:dagger-android:' + daggerVer,
+        daggerAndroidSupport    : 'com.google.dagger:dagger-android-support:' + daggerVer,
+        daggerAndroidApt        : 'com.google.dagger:dagger-android-processor:' + daggerVer,
+
+        // https://github.com/JakeWharton/butterknife
+        butterKnife             : 'com.jakewharton:butterknife:' + butterKnifeVer,
+        butterKnifeApt          : 'com.jakewharton:butterknife-compiler:' + butterKnifeVer,
+//        // 16/12/21
+//        // https://projectlombok.org/features/index.html
+//        // @ToSting, @Builder, @EqualsAndHashCode and many many annotations emulate boiler-plate code
+//        lombok                  : 'org.projectlombok:lombok:' + lombokVer,
+//        lombokApt               : 'org.projectlombok:lombok:' + lombokVer,
+//        // Fixes error : lombok error: package javax.annotation does not exist
+//        lombokErrorFix          : 'org.glassfish:javax.annotation:10.0-b28',
+
+        // StickyHeaders: https://github.com/ShamylZakariya/StickyHeaders
+        stickyheaders           : 'org.zakariya.stickyheaders:stickyheaders:0.7.6',
+
+        // RxJava2
+        rx2                     : 'io.reactivex.rxjava2:rxjava:2.1.1',
+        rx2Android              : 'io.reactivex.rxjava2:rxandroid:2.0.1',
+
+        // MaterialSheetFab (https://github.com/gowong/material-sheet-fab)
+        materialFab             : 'com.gordonwong:material-sheet-fab:1.2.1',
+
+        // StickyHeaders: https://github.com/ShamylZakariya/StickyHeaders
+        stickyheaders           : 'org.zakariya.stickyheaders:stickyheaders:0.7.6'
+
+
+]

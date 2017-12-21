@@ -16,13 +16,50 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    compile 'com.android.support:design:26.1.0'
+    compile 'com.android.support:cardview-v7:26.1.0'
+    compile 'com.android.support:recyclerview-v7:26.1.0'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+
+
+    // Moxy
+    compile libraries.moxy
+    compile libraries.moxyAppCompat
+    annotationProcessor libraries.moxyApt
+
+    // Dagger DI
+    compile libraries.dagger
+    annotationProcessor libraries.daggerCompiler
+
+    // DI - ButterKnife
+    compile libraries.butterKnife
+    annotationProcessor libraries.butterKnifeApt
+
+    // RxJava2
+    compile libraries.rx2
+    compile libraries.rx2Android
+
+    // MaterialSheetFab
+    compile libraries.materialFab
+
+    // StickyHeaders
+    compile libraries.stickyheaders
+
 }

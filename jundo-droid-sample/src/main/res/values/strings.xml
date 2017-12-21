@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">JUndo-Droid Sample</string>
+
+    <string name="simple_note">simple note</string>
+    <string name="list_note">list note</string>
+    <string name="todo_note">todo note</string>
+    <string name="mood_note">mood note</string>
+
 </resources>
