@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestUndoManager extends BaseTest{
+public class TestUndoSerializer extends BaseTest{
 
 
     /**
@@ -49,13 +49,13 @@ public class TestUndoManager extends BaseTest{
         assertEquals(0, ntc.items.size());
         assertEquals(3000, stack.count());
 
-        UndoManager managerBack = null;
+        UndoSerializer managerBack = null;
         {
             // Make unzipped serialization
-            UndoManager manager = new UndoManager(null,2, stack);
-            String data = UndoManager.serialize(manager, false);
+            UndoSerializer manager = new UndoSerializer(null,2, stack);
+            String data = UndoSerializer.serialize(manager, false);
 //            System.out.println("1: " + data.length());
-            managerBack = UndoManager.deserialize(data);
+            managerBack = UndoSerializer.deserialize(data);
             // Here we can't compare managers themselves 'cause of stack's comparison principle it leads at last
             // ------- assertEquals(manager, managerBack);
             assertEquals(manager.ID, managerBack.ID);
@@ -67,10 +67,10 @@ public class TestUndoManager extends BaseTest{
         }
         {
             // Make zipped serialization
-            UndoManager manager = new UndoManager(null,2, stack);
-            String z_data = UndoManager.serialize(manager, true);
+            UndoSerializer manager = new UndoSerializer(null,2, stack);
+            String z_data = UndoSerializer.serialize(manager, true);
 //            System.out.println("zipped length : " + z_data.length());
-            managerBack = UndoManager.deserialize(z_data);
+            managerBack = UndoSerializer.deserialize(z_data);
             // Here we can't compare managers themselves 'cause of stack's comparison principle it leads at last
             // ------- assertEquals(manager, managerBack);
             assertEquals(manager.VERSION, managerBack.VERSION);
