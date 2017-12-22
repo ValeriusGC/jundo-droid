@@ -1,4 +1,4 @@
-package com.gdetotut.libs.jundo_droid_common.aux;
+package com.gdetotut.libs.jundo_droid_common.some;
 
 public interface ConstForTest {
 

@@ -7,51 +7,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The UndoCommand class is the base class of all commands stored on an UndoStack.
+ * The UndoCommand class is the base class of all commands stored on an {@link UndoStack}.
  */
 public class UndoCommand implements Serializable {
 
-    private String text;
-    List<UndoCommand> childLst;
+    public static int NO_COMPRESSION_SUPPORT = -1;
+    private String caption;
+    List<UndoCommand> children;
 
     /**
-     * Constructs an UndoCommand object with the given text.
-     * @param text title for command
-     * @param parent possible parent
+     * Constructs an UndoCommand object with the given caption.
+     * @param caption a short string describing what this command does. Optional.
+     * @param parent command's parent. Used in the concept of 'command-chain'.  Optional.
      */
-    public UndoCommand(@NotNull String text, UndoCommand parent) {
-        setText(text);
+    public UndoCommand(String caption, UndoCommand parent) {
+        setCaption(caption);
         if(parent != null) {
-            if(parent.childLst == null) {
-                parent.childLst = new ArrayList<>();
+            if(parent.children == null) {
+                parent.children = new ArrayList<>();
             }
-            parent.childLst.add(this);
+            parent.children.add(this);
         }
     }
 
     /**
      * Returns the ID of this command.
-     * <p>A command ID is used in command compression. It must be an integer unique to this command's class,
-     * or -1 if the command doesn't support compression.
-     * <p>If the command supports compression this function must be overridden in the derived class to return the correct ID.
-     * The base implementation returns -1.
-     * <p>UndoStack.push() will only try to merge two commands if they have the same ID, and the ID is not -1.
+     * <p>A command ID is used in the "command compression" concept. It must be an integer value
+     * unique to this command's class, or {@link #NO_COMPRESSION_SUPPORT} if the command
+     * doesn't support compression.
+     * <p>If the command supports compression this function must be overridden in the derived class
+     * to return the correct ID.
+     * The base implementation returns {@link #NO_COMPRESSION_SUPPORT}.
+     * <p>{@link UndoStack#push} will only try to merge two commands if they have the same ID,
+     * and the ID is not {@link #NO_COMPRESSION_SUPPORT}.
      *
-     * @return Integer unique to this command's class or -1 if the command doesn't support compression.
+     * @return Integer unique value to this command's class or {@link #NO_COMPRESSION_SUPPORT}
+     * if the command doesn't support compression.
      */
     public int id() {
-        return -1;
+        return NO_COMPRESSION_SUPPORT;
     }
 
     /**
      * Attempts to merge this command with cmd. Returns true on success; otherwise returns false.
-     * <p>If this function returns true, calling this command's redo() must have the same effect as redoing
-     * both this command and cmd.
-     * <p>Similarly, calling this command's undo() must have the same effect as undoing cmd and this command.
-     * <p>UndoStack will only try to merge two commands if they have the same id, and the id is not -1.
+     * <p>If this function returns true, calling this command's {@link #redo()} must have the same effect
+     * as redoing both this command and cmd.
+     * <p>Similarly, calling this command's {@link #undo()} must have the same effect
+     * as undoing cmd and this command.
+     * <p>UndoStack will only try to merge two commands if they have the same {@link #id}, and the id
+     * is not {@link #NO_COMPRESSION_SUPPORT}.
      * <p>The default implementation returns false.
      *
-     * @param cmd Command to try merge with
+     * @param cmd command to try merge with.
      * @return True on success; otherwise returns false.
      */
     public boolean mergeWith(@NotNull UndoCommand cmd) {
@@ -59,25 +66,30 @@ public class UndoCommand implements Serializable {
     }
 
     /**
-     * @return if child commands exist returns their count otherwise returns zero.
+     * @return If child commands exist returns their count; otherwise returns zero.
      */
-    public int childCount() {
-        return childLst != null ? childLst.size() : 0;
+    public final int childCount() {
+        return children != null ? children.size() : 0;
     }
 
+    /**
+     * Returns command by its index. If the index is invalid, returns null.
+     * @param idx index of desired command.
+     * @return Command if index is valid; otherwise null.
+     */
     public UndoCommand child(int idx) {
         if(idx < 0 || idx >= childCount()) {
             return null;
         }
-        return childLst.get(idx);
+        return children.get(idx);
     }
 
     /**
-     * Calls {@link #doRedo} in derived classes.
+     * Calls {@link #doRedo} in the derived classes.
      */
     public final void redo() {
-        if(null != childLst && childLst.size() > 0) {
-            for (UndoCommand cmd : childLst) {
+        if(null != children && children.size() > 0) {
+            for (UndoCommand cmd : children) {
                 cmd.redo();
             }
         }else {
@@ -86,11 +98,11 @@ public class UndoCommand implements Serializable {
     }
 
     /**
-     * Calls {@link #doUndo}  in derived classes.
+     * Calls {@link #doUndo} in the derived classes.
      */
     public final void undo() {
-        if(null != childLst && childLst.size() > 0) {
-            for (UndoCommand cmd : childLst) {
+        if(null != children && children.size() > 0) {
+            for (UndoCommand cmd : children) {
                 cmd.undo();
             }
         }else {
@@ -99,54 +111,40 @@ public class UndoCommand implements Serializable {
     }
 
     /**
-     * Returns a short text string describing what this command does.
-     *
-     * @return title
+     * @return A short string describing what this command does.
      */
-    @NotNull
-    public String getText() {
-        return text;
+    public String getCaption() {
+        return caption;
     }
 
     /**
-     * Sets the command's text to be the \a text specified.
-     * <p>The specified text should be a short user-readable string describing what this  command does.
-     *
-     * @param text title
+     * Sets the command's caption.
+     * <p>Specified caption should be a short user-readable string describing what this  command does.
+     * @param caption a short caption string describing what this command does.
      */
-    public void setText(@NotNull String text) {
-        this.text = text;
+    public void setCaption(String caption) {
+        this.caption = caption;
     }
 
     /**
      * Applies a change to the document. This function must be implemented in the derived class.
-     * <p>Calling UndoStack.push(), UndoStack.undo() or UndoStack.redo() from this function leads to  undefined behavior.
+     * <p>Calling {@link UndoStack#push}, {@link UndoStack#undo} or {@link UndoStack#redo}
+     * from this function leads to  undefined behavior.
      */
-    protected void doRedo() {
-//        if(childLst != null) {
-//            for (UndoCommand cmd : childLst) {
-//                cmd.redo(context);
-//            }
-//        }
-    }
+    protected void doRedo() { }
 
     /**
      * Reverts a change to the document. After undo() is called, the state of the document should be the same
-     * as before redo() was called. This function must be implemented in the derived class.
-     * Calling UndoStack.push(), UndoStack.undo() or UndoStack.redo() from this function leads to undefined behavior.
+     * as before {@link #redo} was called. This function must be implemented in the derived class.
+     * <p>Calling {@link UndoStack#push}, {@link UndoStack#undo} or {@link UndoStack#redo} from this function
+     * leads to  undefined behavior.
      */
-    protected void doUndo() {
-//        if(childLst != null) {
-//            for (UndoCommand cmd : childLst) {
-//                cmd.undo(context);
-//            }
-//        }
-    }
+    protected void doUndo() { }
 
     @Override
     public String toString() {
         return "UndoCommand{" +
-                "text='" + text + '\'' +
+                "caption='" + caption + '\'' +
                 '}';
     }
 }

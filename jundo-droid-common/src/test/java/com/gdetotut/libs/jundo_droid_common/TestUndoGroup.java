@@ -1,7 +1,7 @@
 package com.gdetotut.libs.jundo_droid_common;
 
 
-import com.gdetotut.libs.jundo_droid_common.aux.SimpleClass;
+import com.gdetotut.libs.jundo_droid_common.some.SimpleClass;
 
 import org.junit.Test;
 

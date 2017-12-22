@@ -16,7 +16,7 @@
 		android:layout_gravity="start|center_vertical"
 		android:paddingEnd="16dp"
 		android:paddingStart="16dp"
-		tools:text="Medium Text"
+		tools:caption="Medium Text"
 		android:textAllCaps="true"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:textColor="@color/colorAccent"

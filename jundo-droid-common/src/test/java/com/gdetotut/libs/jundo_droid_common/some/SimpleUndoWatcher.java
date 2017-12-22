@@ -1,4 +1,4 @@
-package com.gdetotut.libs.jundo_droid_common.aux;
+package com.gdetotut.libs.jundo_droid_common.some;
 
 
 import com.gdetotut.libs.jundo_droid_common.UndoWatcher;
@@ -32,12 +32,12 @@ public class SimpleUndoWatcher implements UndoWatcher {
 //    }
 //
 //    @Override
-//    public void undoTextChanged(String undoText) {
-//        System.out.println("" + ++cnt + ": " + "SimpleUndoWatcher.undoTextChanged: " + undoText);
+//    public void undoTextChanged(String undoCaption) {
+//        System.out.println("" + ++cnt + ": " + "SimpleUndoWatcher.undoTextChanged: " + undoCaption);
 //    }
 //
 //    @Override
-//    public void redoTextChanged(String redoText) {
-//        System.out.println("" + ++cnt + ": " + "SimpleUndoWatcher.redoTextChanged: " + redoText);
+//    public void redoTextChanged(String redoCaption) {
+//        System.out.println("" + ++cnt + ": " + "SimpleUndoWatcher.redoTextChanged: " + redoCaption);
 //    }
 }

@@ -17,13 +17,13 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * The UndoSerializer class is responsible for correct serialization and deserialization of entire UndoStack.
- * <p>Stack encodes to Base64 using the <a href="#url">URL and Filename safe</a> type base64 encoding scheme.</p>
- * <p>UndoSerializer has a number of useful properties to restore stack correctly:</p>
+ * The UndoSerializer class is responsible for correct serialization and deserialization of entire {@link UndoStack}.
+ * <p>Stack encodes to Base64 using the <a href="#url">URL and Filename safe</a> type base64 encoding scheme.
+ * <p>UndoSerializer has a number of useful properties to restore stack correctly:
  * <ul>
- *     <li>ID alows to save an unique identifier of stack's subject</li>
+ *     <li>ID allows to save an unique identifier of stack's subject</li>
  *     <li>VERSION can be very useful when saved version and new version of object are not equal so migration needed.</li>
- *     <li>The map "extras" allows to save other extra parameters in the key-value form</li>
+ *     <li>The map "extras" allows to save other extra parameters in the 'key-value' form</li>
  * </ul>
  */
 public class UndoSerializer implements Serializable {
@@ -63,7 +63,7 @@ public class UndoSerializer implements Serializable {
      * @throws IOException when something goes wrong
      * @throws ClassNotFoundException when something goes wrong
      */
-    public static <Context> UndoSerializer deserialize(@NotNull String base64) throws IOException, ClassNotFoundException {
+    public static UndoSerializer deserialize(@NotNull String base64) throws IOException, ClassNotFoundException {
 
         final byte[] data = Base64.decode(base64, Base64.URL_SAFE);
         final boolean zipped = (data[0] == (byte) (GZIPInputStream.GZIP_MAGIC))
@@ -72,13 +72,12 @@ public class UndoSerializer implements Serializable {
         try (ObjectInputStream ois = zipped
                 ? new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(data)))
                 : new ObjectInputStream(new ByteArrayInputStream(data))) {
-            final UndoSerializer um = (UndoSerializer) ois.readObject();
-            return um;
+            return (UndoSerializer) ois.readObject();
         }
     }
 
     /**
-     *  Makes object with specific parameters.
+     * Makes object with specific parameters.
      * @param id unique identifier allowing recognize subject on the deserializing side.
      * @param version version of subject for correct restoring in the possible case of object migration.
      * @param stack stack itself.
@@ -97,7 +96,7 @@ public class UndoSerializer implements Serializable {
     }
 
     /**
-     * @return extra parameters in the form of key-value.
+     * @return Extra parameters in the 'key-value' form.
      */
     public Map<String, String> getExtras() {
         return extras;

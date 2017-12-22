@@ -91,7 +91,7 @@
                     style="@style/TextAppearance.MaterialSheetFab.Sheet.Item"
                     android:drawableLeft="@drawable/ic_description_black_24dp"
                     android:drawableStart="@drawable/ic_description_black_24dp"
-                    android:text="@string/simple_note" />
+                    android:caption="@string/simple_note" />
 
                 <!-- List note -->
                 <TextView
@@ -99,7 +99,7 @@
                     style="@style/TextAppearance.MaterialSheetFab.Sheet.Item"
                     android:drawableLeft="@drawable/ic_assignment_black_24dp"
                     android:drawableStart="@drawable/ic_assignment_black_24dp"
-                    android:text="@string/list_note" />
+                    android:caption="@string/list_note" />
 
                 <!-- Todo_ note -->
                 <TextView
@@ -107,7 +107,7 @@
                     style="@style/TextAppearance.MaterialSheetFab.Sheet.Item"
                     android:drawableLeft="@drawable/ic_receipt_black_24dp"
                     android:drawableStart="@drawable/ic_receipt_black_24dp"
-                    android:text="@string/todo_note" />
+                    android:caption="@string/todo_note" />
 
                 <!-- Mood -->
                 <LinearLayout
@@ -120,7 +120,7 @@
                         style="@style/TextAppearance.MaterialSheetFab.Sheet.Item"
                         android:drawableLeft="@drawable/ic_card_giftcard_black_24dp"
                         android:drawableStart="@drawable/ic_card_giftcard_black_24dp"
-                        android:text="@string/mood_note" />
+                        android:caption="@string/mood_note" />
                 </LinearLayout>
 
             </LinearLayout>

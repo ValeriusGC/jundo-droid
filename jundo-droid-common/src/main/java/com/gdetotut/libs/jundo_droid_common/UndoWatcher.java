@@ -2,7 +2,6 @@ package com.gdetotut.libs.jundo_droid_common;
 
 /**
  * Methods for subscribers.
- *
  */
 public interface UndoWatcher {
 

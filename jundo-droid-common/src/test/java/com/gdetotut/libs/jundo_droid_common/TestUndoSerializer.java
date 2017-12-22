@@ -1,7 +1,7 @@
 package com.gdetotut.libs.jundo_droid_common;
 
-import com.gdetotut.libs.jundo_droid_common.aux.NonTrivialClass;
-import com.gdetotut.libs.jundo_droid_common.aux.SimpleUndoWatcher;
+import com.gdetotut.libs.jundo_droid_common.some.NonTrivialClass;
+import com.gdetotut.libs.jundo_droid_common.some.SimpleUndoWatcher;
 
 import org.junit.Test;
 
@@ -61,9 +61,9 @@ public class TestUndoSerializer extends BaseTest{
             assertEquals(manager.ID, managerBack.ID);
             assertEquals(manager.VERSION, managerBack.VERSION);
             assertEquals(manager.getExtras(), managerBack.getExtras());
-            assertEquals(manager.getStack().getSubject(), managerBack.getStack().getSubject());
+            assertEquals(manager.getStack().getSubj(), managerBack.getStack().getSubj());
             //~
-            assertEquals(NonTrivialClass.class, manager.getStack().getSubject().getClass());
+            assertEquals(NonTrivialClass.class, manager.getStack().getSubj().getClass());
         }
         {
             // Make zipped serialization
@@ -75,13 +75,13 @@ public class TestUndoSerializer extends BaseTest{
             // ------- assertEquals(manager, managerBack);
             assertEquals(manager.VERSION, managerBack.VERSION);
             assertEquals(manager.getExtras(), managerBack.getExtras());
-            assertEquals(manager.getStack().getSubject(), managerBack.getStack().getSubject());
+            assertEquals(manager.getStack().getSubj(), managerBack.getStack().getSubj());
             //~
-            assertEquals(NonTrivialClass.class, manager.getStack().getSubject().getClass());
+            assertEquals(NonTrivialClass.class, manager.getStack().getSubj().getClass());
         }
 
         UndoStack stackBack = managerBack.getStack();
-        NonTrivialClass ntcBack = (NonTrivialClass)stackBack.getSubject();
+        NonTrivialClass ntcBack = (NonTrivialClass)stackBack.getSubj();
         stackBack.setWatcher(new SimpleUndoWatcher());
         // Check out
         for(int i = 0; i < 1000; ++i) {

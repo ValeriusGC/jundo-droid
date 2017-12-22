@@ -1,4 +1,4 @@
-package com.gdetotut.libs.jundo_droid_common.aux;
+package com.gdetotut.libs.jundo_droid_common.some;
 
 import java.io.Serializable;
 import java.util.Objects;

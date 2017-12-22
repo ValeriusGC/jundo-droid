@@ -1,4 +1,4 @@
-package com.gdetotut.libs.jundo_droid_common.aux;
+package com.gdetotut.libs.jundo_droid_common.some;
 
 
 import com.gdetotut.libs.jundo_droid_common.UndoCommand;
@@ -67,7 +67,7 @@ public class NonTrivialClass implements Serializable {
             this.scene = scene;
             item = new Item(type);
             initialPos = this.scene.items.size() * 2;
-            setText(ConstForTest.CMD_ADD + " at " + initialPos);
+            setCaption(ConstForTest.CMD_ADD + " at " + initialPos);
         }
 
         @Override
@@ -108,7 +108,7 @@ public class NonTrivialClass implements Serializable {
             super("", parent);
             this.scene = scene;
             this.item = scene.items.size() > 0 ? scene.items.get(0) : null;
-            setText(ConstForTest.CMD_DEL + " at " + item.x);
+            setCaption(ConstForTest.CMD_DEL + " at " + item.x);
         }
 
         @Override
@@ -155,7 +155,7 @@ public class NonTrivialClass implements Serializable {
             this.item = item;
             this.oldPos = oldPos;
             this.newPos = item.x;
-            setText(ConstForTest.CMD_MOV + " to " + item.x);
+            setCaption(ConstForTest.CMD_MOV + " to " + item.x);
         }
 
         @Override
@@ -174,7 +174,7 @@ public class NonTrivialClass implements Serializable {
                 Item item = ((MovedCommand) cmd).item;
                 if(item == this.item) {
                     newPos = item.x;
-                    setText(ConstForTest.CMD_MOV + " to " + item.x);
+                    setCaption(ConstForTest.CMD_MOV + " to " + item.x);
                     return true;
                 }
             }
