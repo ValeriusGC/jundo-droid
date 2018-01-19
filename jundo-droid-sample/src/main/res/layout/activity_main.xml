@@ -5,7 +5,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:fitsSystemWindows="true"
-                tools:context=".ui.activity.MainActivity">
+                tools:context="com.gdetotut.libs.jundo_droidsample.ui.activity.MainActivity">
 
     <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
@@ -91,7 +91,7 @@
                     style="@style/TextAppearance.MaterialSheetFab.Sheet.Item"
                     android:drawableLeft="@drawable/ic_description_black_24dp"
                     android:drawableStart="@drawable/ic_description_black_24dp"
-                    android:caption="@string/simple_note" />
+                    android:text="@string/simple_note" />
 
                 <!-- List note -->
                 <TextView
@@ -99,7 +99,7 @@
                     style="@style/TextAppearance.MaterialSheetFab.Sheet.Item"
                     android:drawableLeft="@drawable/ic_assignment_black_24dp"
                     android:drawableStart="@drawable/ic_assignment_black_24dp"
-                    android:caption="@string/list_note" />
+                    android:text="@string/list_note" />
 
                 <!-- Todo_ note -->
                 <TextView
@@ -107,7 +107,7 @@
                     style="@style/TextAppearance.MaterialSheetFab.Sheet.Item"
                     android:drawableLeft="@drawable/ic_receipt_black_24dp"
                     android:drawableStart="@drawable/ic_receipt_black_24dp"
-                    android:caption="@string/todo_note" />
+                    android:text="@string/todo_note" />
 
                 <!-- Mood -->
                 <LinearLayout
@@ -120,7 +120,7 @@
                         style="@style/TextAppearance.MaterialSheetFab.Sheet.Item"
                         android:drawableLeft="@drawable/ic_card_giftcard_black_24dp"
                         android:drawableStart="@drawable/ic_card_giftcard_black_24dp"
-                        android:caption="@string/mood_note" />
+                        android:text="@string/mood_note" />
                 </LinearLayout>
 
             </LinearLayout>

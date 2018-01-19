@@ -1,6 +1,9 @@
 package com.gdetotut.libs.jundo_droidsample.mvp.presenters;
 
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.Preference;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -11,6 +14,8 @@ import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
 import com.gdetotut.libs.jundo_droidsample.model.NoteLoader;
 import com.gdetotut.libs.jundo_droidsample.mvp.views.MainView;
 import com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +34,18 @@ public class MainPresenter extends MvpPresenter<MainView> {
 
     @Inject
     NoteLoader mNoteLoader;
+
+    @Inject
+    Context ctx;
+
     private boolean mIsInLoading;
     private List<BriefNote> mTestNotes = new ArrayList<>();
     private boolean mLoading;
 
     private CompositeDisposable disposable = new CompositeDisposable();
+
+    private static String NAME = "NAME";
+    private static String LIST = "list";
 
     public MainPresenter() {
         App.getAppComponent().inject(this);
@@ -48,6 +60,12 @@ public class MainPresenter extends MvpPresenter<MainView> {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy");
+
+        String json = new Gson().toJson(mTestNotes);
+        SharedPreferences.Editor ed = ctx.getSharedPreferences(NAME, Context.MODE_PRIVATE).edit();
+        ed.putString(LIST, json).apply();
+
         disposable.clear();
     }
 
@@ -122,6 +140,15 @@ public class MainPresenter extends MvpPresenter<MainView> {
         if(mLoading) {
             return mTestNotes;
         }
+
+        SharedPreferences sp = ctx.getSharedPreferences(NAME, Context.MODE_PRIVATE);
+        String json = sp.getString(LIST, null);
+        if(null != json) {
+            Log.d(TAG, "load: " + json);
+            mTestNotes = new Gson().fromJson(json, new TypeToken<List<BriefNote>>(){}.getType());
+            return mTestNotes;
+        }
+
 
         mLoading = true;
         final int count = 36;

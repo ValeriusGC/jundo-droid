@@ -1,15 +1,13 @@
 package com.gdetotut.libs.jundo_droid_common;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * The UndoGroup class is a group of {@link UndoStack} objects.
- * <p>An application often has multiple undo stacks, one for each opened document. At the same time,
- * an application usually has one undo action and one redo action, which triggers undo or redo in the active document.</p>
+ * <p>An application often has multiple undo stacks, one for each subject. At the same time,
+ * an application usually has one undo action and one redo action, which triggers undo or redo for the active subject.
  * <p>UndoGroup is a group of {@link UndoStack} objects, one of which may be active.
  * It has an {@link #undo} and {@link #redo} methods, which calls {@link UndoStack#undo} and {@link UndoStack#redo}
  * for the active stack.
@@ -18,12 +16,19 @@ import java.util.List;
  * <p><b>UndoGroup doesn't allow to add 2 stacks with the same subject (compares by address) because
  * it is a logical violation.</b>
  * <p>It is the programmer's responsibility to specify which stack is active by calling {@link UndoStack#setActive},
- * usually when the associated document window receives focus. The active stack may also be set with {@link #setActive},
+ * usually when the associated subject "receives focus". The active stack may also be set with {@link #setActive},
  * and is returned by {@link #getActive}.
  */
 public class UndoGroup implements Serializable {
 
+    /**
+     * Active stack. Can be null if no one stack is active at the moment.
+     */
     private UndoStack active;
+
+    /**
+     * List of associated stacks.
+     */
     private final List<UndoStack> stacks = new ArrayList<>();
 
     /**
@@ -39,39 +44,43 @@ public class UndoGroup implements Serializable {
 
     /**
      * Adds {@link UndoStack} to this group.
-     * @param stack stack to be added.
+     *
+     * @param stack stack to be added. Required.
      */
-    public void add(@NotNull UndoStack stack) {
-        if (stacks.contains(stack)) {
-            return;
-        }
+    public void add(UndoStack stack) {
+        if (stack == null) {
+            throw new NullPointerException("stack");
+        } else if (!this.stacks.contains(stack)) {
+            this.stacks.add(stack);
+            if (null != stack.group) {
+                stack.group.remove(stack);
+            }
 
-        stacks.add(stack);
-        if (null != stack.group) {
-            stack.group.remove(stack);
+            stack.group = this;
         }
-        stack.group = this;
-
     }
 
     /**
      * Removes stack from this group. If the stack was the active stack in the group,
      * the active stack becomes null.
-     * @param stack stack to be removed.
+     *
+     * @param stack stack to be removed. Required.
      */
-    public void remove(@NotNull UndoStack stack) {
-        if (!stacks.remove(stack)) {
-            return;
-        }
+    public void remove(UndoStack stack) {
+        if (stack == null) {
+            throw new NullPointerException("stack");
+        } else if (this.stacks.remove(stack)) {
+            if (stack == this.active) {
+                this.setActive((UndoStack) null);
+            }
 
-        if (stack == active) {
-            setActive(null);
+            stack.group = null;
         }
-        stack.group = null;
     }
 
     /**
      * Returns a list of stacks in this group.
+     *
      * @return Stack list.
      */
     public List<UndoStack> getStacks() {
@@ -82,6 +91,7 @@ public class UndoGroup implements Serializable {
      * Sets the active stack of this group to stack.
      * <p>If the stack is not a member of this group, this function does nothing.
      * Synonymous with calling {@link UndoStack#setActive} on stack.
+     *
      * @param stack stack to make active or null.
      */
     public void setActive(UndoStack stack) {
@@ -94,6 +104,7 @@ public class UndoGroup implements Serializable {
     /**
      * Returns the active stack of this group.
      * <p>If none of the stacks are active, or if the group is empty, this function returns null.
+     *
      * @return active stack or null.
      */
     public UndoStack getActive() {

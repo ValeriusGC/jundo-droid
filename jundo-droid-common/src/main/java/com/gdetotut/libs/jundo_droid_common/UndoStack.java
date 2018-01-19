@@ -1,48 +1,98 @@
 package com.gdetotut.libs.jundo_droid_common;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.io.*;
+import java.util.*;
 
 /**
- * <b>Main characteristic of {@link UndoStack} is that two different stacks should not share one subj.</b>
- * <p>Otherwise {@link UndoGroup} may not add them both, and there will be collision when undoing one subj
- *  via different stacks.
+ * Stack of entire {@link UndoCommand} chain for subject.
+ * <b>Main characteristic of {@link UndoStack} is that two different stacks should not share one subject.</b>
+ * <p>Otherwise {@link UndoGroup} may not add them both, and there will be collision when undoing one subject
+ * via different stacks.
  */
-public class UndoStack implements Serializable{
+public class UndoStack implements Serializable {
 
+    /**
+     * Group of stacks that owns this stack. Optional.
+     */
     UndoGroup group;
 
     /**
-     * Keeps the subj for whom {@link #commands} are behave.
-     * <p>Required parameter but can be null if it is impossible to serialize.
+     * Keeps the subject for whom {@link #commands} are behave. Required.
      */
-    private final Serializable subj;
+    private transient Object subj;
+
+    /**
+     * Index of current command that redo.
+     */
     private int idx;
+
+    /**
+     * Index of clean state command.
+     */
     private int cleanIdx;
+
+    /**
+     * List of commands.
+     */
     private List<UndoCommand> commands;
-    private List<UndoCommand> macroStack;
+
+    /**
+     * Macro that is been building at this moment.
+     */
+    private UndoCommand macroCmd;
+
+    /**
+     * List of macros.
+     */
+    private List<UndoCommand> macros;
+
+    /**
+     * Limit for command's stack.
+     */
     private int undoLimit;
 
     /**
-     *
+     * Client that watching events. Optional.
      */
     private transient UndoWatcher watcher;
 
     /**
-     * Constructs an empty undo stack. The stack will initially be in the clean state.
-     * If parent is not a null the stack is automatically added to the group.
-     * @param subj for whom this stack was made. Can be null if no way to make it serializable.
-     * @param group possible group for this {@link UndoStack}
+     * List of local contexts. Optional.
      */
-    public UndoStack(@NotNull Serializable subj, UndoGroup group) {
-        this.subj = subj;
-        if(null != group) {
-            group.add(this);
+    private transient Map<String, Object> localContexts;
+
+    /**
+     * Flag for get rid of parasite commands.
+     */
+    private boolean suspend = false;
+
+    /**
+     * Constructs an empty undo stack. The stack will initially be in the clean state.
+     * If group is not a null the stack is automatically added to the group.
+     *
+     * @param subj  for whom this stack was made. Can be null if no way to make it serializable. Required.
+     * @param group possible group for this {@link UndoStack}.
+     */
+    public UndoStack(Object subj, UndoGroup group) {
+        if (subj == null) {
+            throw new NullPointerException("subj");
+        } else {
+            this.subj = subj;
+            if (null != group) {
+                group.add(this);
+            }
+
         }
+    }
+
+    /**
+     * @return List of local contexts.
+     */
+    public Map<String, Object> getLocalContexts() {
+        if (localContexts == null) {
+            localContexts = new HashMap<>();
+        }
+        return localContexts;
     }
 
     /**
@@ -51,18 +101,13 @@ public class UndoStack implements Serializable{
      * <p>This function is usually used when the contents of the document are abandoned.
      */
     public void clear() {
-        if(commands == null || commands.isEmpty()) {
+        if (commands == null || commands.isEmpty()) {
             return;
         }
 
         boolean wasClean = isClean();
-
-        if(macroStack != null){
-            macroStack.clear();
-        }
-
         for (UndoCommand cmd : commands) {
-            if(cmd.children != null) {
+            if (cmd.children != null) {
                 cmd.children.clear();
             }
         }
@@ -70,13 +115,13 @@ public class UndoStack implements Serializable{
         idx = 0;
         cleanIdx = 0;
 
-        if(null != watcher){
+        if (null != watcher) {
             watcher.indexChanged(0);
             watcher.canUndoChanged(false);
             watcher.undoTextChanged("");
             watcher.canRedoChanged(false);
             watcher.redoTextChanged("");
-            if(!wasClean){
+            if (!wasClean) {
                 watcher.cleanChanged(true);
             }
         }
@@ -85,7 +130,7 @@ public class UndoStack implements Serializable{
     /**
      * Pushes cmd on the stack or merges it with the most recently executed command.
      * In either case, executes cmd by calling its {@link UndoCommand#redo} function.
-     * <p>If cmd's id is not {@link UndoCommand#NO_COMPRESSION_SUPPORT}, and if the id is the same
+     * <p>If cmd's id is not {@link UndoCommand#NO_MERGING}, and if the id is the same
      * as that of the most recently executed command, UndoStack will attempt to merge the two
      * commands by calling {@link UndoCommand#mergeWith} on the most recently executed
      * command. If {@link UndoCommand#mergeWith} returns true, cmd is deleted.
@@ -95,62 +140,75 @@ public class UndoStack implements Serializable{
      * <p>Once a command is pushed, the stack takes ownership of it.
      * There are no getters to return the command, since modifying it after it has
      * been executed will almost always lead to corruption of the document's state.
-     * @param cmd new command to execute.
+     *
+     * @param cmd new command to execute. Required.
      */
-    public void push(@NotNull UndoCommand cmd) {
+    public void push(UndoCommand cmd) {
 
-        cmd.redo();
+        if (cmd == null) {
+            throw new NullPointerException("cmd");
+        } else if (!suspend) {
 
-        boolean macro = macroStack != null && !macroStack.isEmpty();
-
-        if(commands == null) {
-            commands = new ArrayList<>();
-        }
-
-        UndoCommand cur = null;
-        UndoCommand macroCmd = null;
-        if(macro) {
-            macroCmd = macroStack.get(macroStack.size() - 1);
-            if(macroCmd.children != null && !macroCmd.children.isEmpty()) {
-                cur = macroCmd.children.get(macroCmd.children.size() - 1);
+            UndoCommand copy = null;
+            try {
+                copy = clone(cmd);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }else{
-            if(idx > 0) {
-                cur = commands.get(idx - 1);
+
+            cmd.redo();
+
+            boolean onMacro = null != macroCmd;
+
+            if (commands == null) {
+                commands = new ArrayList<>();
             }
+
+            UndoCommand cur = idx > 0 ? commands.get(idx - 1) : null;
+
             while (idx < commands.size()) {
                 commands.remove(commands.size() - 1);
             }
-            if(cleanIdx > idx){
+
+            if (cleanIdx > idx) {
                 cleanIdx = -1;
             }
-        }
 
+            boolean canMerge = cur != null
+                    && cur.id() != -1
+                    && cur.id() == cmd.id()
+                    && onMacro || idx != cleanIdx;
 
-        boolean canMerge = cur != null
-                && cur.id() != -1
-                && cur.id() == cmd.id()
-                && macro || idx != cleanIdx;
-
-        if(canMerge && cur != null && cur.mergeWith(cmd)){
-            if(!macro && null != watcher) {
-                watcher.indexChanged(idx);
-                watcher.canUndoChanged(canUndo());
-                watcher.undoTextChanged(undoCaption());
-                watcher.canRedoChanged(canRedo());
-                watcher.redoTextChanged(redoCaption());
-            }
-        }else{
-            if(macro) {
-                if(macroCmd.children == null) {
-                    macroCmd.children = new ArrayList<>();
+            if (canMerge && cur != null && cur.mergeWith(cmd)) {
+                if (!onMacro && null != watcher) {
+                    watcher.indexChanged(idx);
+                    watcher.canUndoChanged(canUndo());
+                    watcher.undoTextChanged(undoCaption());
+                    watcher.canRedoChanged(canRedo());
+                    watcher.redoTextChanged(redoCaption());
                 }
-                macroCmd.children.add(cmd);
-            }else {
-                // And last actions
-                commands.add(cmd);
-                checkUndoLimit();
-                setIndex(idx + 1, false);
+            } else {
+                if (onMacro) {
+                    if (null != copy) {
+                        if (macroCmd.children == null) {
+                            macroCmd.children = new ArrayList<>();
+                        }
+                        macroCmd.children.add(copy);
+                    } else {
+                        dropMacro();
+                    }
+
+                    if (null == cur.children) {
+                        cur.children = new ArrayList<>();
+                    }
+                    cur.children.add(cmd);
+
+                } else {
+                    // And last actions
+                    commands.add(cmd);
+                    checkUndoLimit();
+                    setIndex(idx + 1, false);
+                }
             }
         }
     }
@@ -162,7 +220,7 @@ public class UndoStack implements Serializable{
      * This signal is also emitted when the stack leaves the clean state.
      */
     public void setClean() {
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             System.err.println("UndoStack.setClean(): cannot set clean in the middle of a macro");
             return;
         }
@@ -173,7 +231,7 @@ public class UndoStack implements Serializable{
      * @return If the stack is in the clean state, returns true; otherwise returns false.
      */
     public boolean isClean() {
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             return false;
         }
         return cleanIdx == idx;
@@ -201,15 +259,20 @@ public class UndoStack implements Serializable{
             return;
         }
 
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             System.err.println("UndoStack.undo(): cannot undo in the middle of a macro");
             return;
         }
 
-        int idx = this.idx - 1;
+        try {
+            suspend = true;
+            int idx = this.idx - 1;
+            commands.get(idx).undo();
+            setIndex(idx, false);
+        } finally {
+            suspend = false;
+        }
 
-        commands.get(idx).undo();
-        setIndex(idx, false);
     }
 
     /**
@@ -222,13 +285,18 @@ public class UndoStack implements Serializable{
             return;
         }
 
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             System.err.println("UndoStack.redo(): cannot redo in the middle of a macro");
             return;
         }
 
-        commands.get(idx).redo();
-        setIndex(idx + 1, false);
+        try {
+            suspend = true;
+            commands.get(idx).redo();
+            setIndex(idx + 1, false);
+        } finally {
+            suspend = false;
+        }
     }
 
     /**
@@ -251,22 +319,23 @@ public class UndoStack implements Serializable{
      * Repeatedly calls {@link #undo} or {@link #redo} until the current command index reaches idx.
      * This function can be used to roll the state of the document forwards of backwards.
      * <p>{@link UndoWatcher#indexChanged} is emitted only once.
+     *
      * @param idx index to achieve.
      */
     public void setIndex(int idx) {
 
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             System.err.println("UndoStack.setIndex(): cannot set index in the middle of a macro");
             return;
         }
 
-        if(commands == null) {
+        if (commands == null) {
             return;
         }
 
-        if(idx < 0) {
+        if (idx < 0) {
             idx = 0;
-        }else if(idx > commands.size()){
+        } else if (idx > commands.size()) {
             idx = commands.size();
         }
 
@@ -274,7 +343,7 @@ public class UndoStack implements Serializable{
         while (i < idx) {
             commands.get(i++).redo();
         }
-        while (i > idx){
+        while (i > idx) {
             commands.get(--i).undo();
         }
 
@@ -288,7 +357,7 @@ public class UndoStack implements Serializable{
      * <p>Synonymous with {@link #getIdx()} == 0.
      */
     public boolean canUndo() {
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             return false;
         }
         return idx > 0;
@@ -301,7 +370,7 @@ public class UndoStack implements Serializable{
      * <p>Synonymous with {@link #getIdx()}  == {@link #count()}).
      */
     public boolean canRedo() {
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             return false;
         }
         return commands != null && idx < commands.size();
@@ -311,7 +380,7 @@ public class UndoStack implements Serializable{
      * @return The caption of the command which will be undone in the next call to {@link #undo()}.
      */
     public String undoCaption() {
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             return "";
         }
         return (commands != null && idx > 0) ? commands.get(idx - 1).getCaption() : "";
@@ -321,7 +390,7 @@ public class UndoStack implements Serializable{
      * @return The caption of the command which will be redone in the next call to {@link #redo()}.
      */
     public String redoCaption() {
-        if(macroStack != null && !macroStack.isEmpty()) {
+        if (null != macroCmd) {
             return "";
         }
         return (commands != null && idx < commands.size()) ? commands.get(idx).getCaption() : "";
@@ -336,46 +405,52 @@ public class UndoStack implements Serializable{
      * must have a matching call to {@link #endMacro()}.
      * <p>While a macro is composed, the stack is disabled. This means that:
      * <ul>
-     *  <li>{@link UndoWatcher#indexChanged} and {@link UndoWatcher#cleanChanged} are not emitted,
-     *  <li>{@link #canUndo()} and {@link #canRedo()} return false,
-     *  <li>calling {@link #undo()} or {@link #redo()} has no effect,
-     *  <li>the undo/redo actions are disabled
+     * <li>{@link UndoWatcher#indexChanged} and {@link UndoWatcher#cleanChanged} are not emitted,
+     * <li>{@link #canUndo()} and {@link #canRedo()} return false,
+     * <li>calling {@link #undo()} or {@link #redo()} has no effect,
+     * <li>the undo/redo actions are disabled
      * </ul>
      * <p>The stack becomes enabled and appropriate signals are emitted when {@link #endMacro()} is called
      * for the outermost macro.
-     * @param caption description for this macro.
+     *
+     * @param caption description for this macro. Optional.
      */
     public void beginMacro(String caption) {
 
-        final UndoCommand cmd = new UndoCommand(caption, null);
-
-        if(macroStack == null) {
-            macroStack = new ArrayList<>();
+        if (null != macroCmd) {
+            System.err.println("UndoStack.beginMacro(): cannot set new beginMacro in the middle of a macro");
+            return;
         }
 
-        if(macroStack.isEmpty()) {
+        UndoCommand startMacro = new UndoCommand(this, caption, null);
 
-            while (idx < commands.size()) {
-                commands.remove(commands.size() - 1);
-            }
-            if(cleanIdx > idx) {
-                cleanIdx = -1;
-            }
-            commands.add(cmd);
-
-        }else {
-            macroStack.get(macroStack.size() - 1).children.add(cmd);
+        try {
+            macroCmd = clone(startMacro);
+        } catch (Exception  e) {
+            System.err.println(e.getLocalizedMessage());
+            endMacro();
         }
 
-        macroStack.add(cmd);
+        if (null == commands) {
+            commands = new ArrayList<>();
+        }
 
-        if(macroStack.size() == 1) {
-            if(watcher != null) {
-                watcher.canUndoChanged(false);
-                watcher.undoTextChanged("");
-                watcher.canRedoChanged(false);
-                watcher.redoTextChanged("");
-            }
+        while (idx < commands.size()) {
+            commands.remove(commands.size() - 1);
+        }
+        if (cleanIdx > idx) {
+            cleanIdx = -1;
+        }
+        commands.add(startMacro);
+        checkUndoLimit();
+        setIndex(idx + 1, false);
+
+        if (watcher != null) {
+            watcher.macroChanged(true);
+            watcher.canUndoChanged(false);
+            watcher.undoTextChanged("");
+            watcher.canRedoChanged(false);
+            watcher.redoTextChanged("");
         }
     }
 
@@ -385,14 +460,26 @@ public class UndoStack implements Serializable{
      * emits {@link UndoWatcher#indexChanged} once for the entire macro command.
      */
     public void endMacro() {
-        if(macroStack == null || macroStack.isEmpty()) {
+        if (null == macroCmd) {
             System.err.println("UndoStack.endMacro(): no matching beginMacro()");
         }
-        macroStack.remove(macroStack.size()-1);
+        if (null == macros) {
+            macros = new ArrayList<>();
+        }
+        macros.add(macroCmd);
+        macroCmd = null;
+        if (null != watcher) {
+            watcher.macroChanged(false);
+        }
+    }
 
-        if(macroStack.isEmpty()){
-            checkUndoLimit();
-            setIndex(idx + 1, false);
+    /**
+     * Drops macro creation.
+     */
+    public void dropMacro() {
+        macroCmd = null;
+        if (null != watcher) {
+            watcher.macroChanged(false);
         }
     }
 
@@ -400,11 +487,12 @@ public class UndoStack implements Serializable{
      * Returns a reference to the command at idx.
      * <p>Be aware to modify it because modifying a command, once it has been pushed onto the stack and executed,
      * almost always causes corruption of the state of the document, if the command is later undone or redone.
+     *
      * @param idx the index of command has been retrieved.
      * @return Command or null.
      */
     public UndoCommand getCommand(int idx) {
-        if(commands == null || idx < 0 || idx >= commands.size()) {
+        if (commands == null || idx < 0 || idx >= commands.size()) {
             return null;
         }
         return commands.get(idx);
@@ -412,11 +500,12 @@ public class UndoStack implements Serializable{
 
     /**
      * Returns the caption of the command at index idx.
+     *
      * @param idx the index of command's caption has been retrieved.
      * @return Text or empty string.
      */
     public String caption(int idx) {
-        if(commands == null || idx < 0 || idx >= commands.size()) {
+        if (commands == null || idx < 0 || idx >= commands.size()) {
             return "";
         }
         return commands.get(idx).getCaption();
@@ -428,15 +517,16 @@ public class UndoStack implements Serializable{
      * <p>This property may only be set when the undo stack is empty, since setting it on a non-empty stack
      * might delete the command at the current index. Calling {@link #setUndoLimit} on a non-empty stack
      * prints a warning and does nothing.
+     *
      * @param value new undo limit.
      */
     public void setUndoLimit(int value) {
 
-        if(commands != null && commands.size() > 0) {
+        if (commands != null && commands.size() > 0) {
             System.err.println("UndoStack.setUndoLimit(): an undo limit can only be set when the stack is empty");
         }
 
-        if(value == undoLimit) {
+        if (value == undoLimit) {
             return;
         }
         undoLimit = value;
@@ -469,10 +559,10 @@ public class UndoStack implements Serializable{
      * @param active setting this UndoStack active in its group if it exists.
      */
     public void setActive(boolean active) {
-        if(group != null) {
-            if(active) {
+        if (group != null) {
+            if (active) {
                 group.setActive(this);
-            }else if(group.getActive() == this) {
+            } else if (group.getActive() == this) {
                 group.setActive(null);
             }
         }
@@ -481,13 +571,33 @@ public class UndoStack implements Serializable{
     /**
      * @return Subject via calling descendants real object.
      */
-    @NotNull
-    public Serializable getSubj() {
+    public Object getSubj() {
         return subj;
     }
 
     /**
-     * @return The subscribed wather if it exists or null.
+     * Reset subj. Used in {@link UndoPacket}.
+     * <p><b>Do not use it!</b>
+     *
+     * @param value new subject. Required.
+     */
+    public void setSubj(Object value) {
+        if (null == value) {
+            throw new NullPointerException("value");
+        } else {
+            subj = value;
+        }
+    }
+
+    /**
+     * @return List of macros.
+     */
+    public List<UndoCommand> getMacros() {
+        return macros;
+    }
+
+    /**
+     * @return The subscribed watcher if it exists or null.
      */
     public UndoWatcher getWatcher() {
         return watcher;
@@ -495,33 +605,64 @@ public class UndoStack implements Serializable{
 
     /**
      * Sets the watcher for signals emitted.
+     *
      * @param watcher subscriber for signals. Setting parameter to null unsubscribe it.
      */
     public void setWatcher(UndoWatcher watcher) {
         this.watcher = watcher;
     }
 
-    @Override
-    public String toString() {
-        return "UndoStack{" +
-                "idx=" + idx +
-                ", commands=" + (commands == null ? "" : commands) +
-                '}';
+    /**
+     * Clones command. Use it for clone macro only!
+     *
+     * @param cmd macro for clone.
+     * @return Cloned command.
+     * @throws Exception If something goes wrong.
+     */
+    public UndoCommand clone(UndoCommand cmd) throws Exception {
+        if (null == cmd) {
+            throw new NullPointerException("cmd");
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (final ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+            oos.writeObject(cmd);
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
+            UndoCommand cmdClone = (UndoCommand) ois.readObject();
+            cmdClone.owner = cmd.owner;
+            if (null != cmdClone.children) {
+                for (UndoCommand uc : cmdClone.children) {
+                    uc.owner = cmd.owner;
+                }
+            }
+            return cmdClone;
+        }
     }
 
+    /**
+     * We use <b>getSubj() == stack.getSubj()</b> instead of <b>Objects.equals(getSubj(), stack.getSubj())</b>
+     * because semantic of <b>2 stack differs when they have different addresses in memory.</b>
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UndoStack stack = (UndoStack) o;
 
-        return idx == stack.idx
-                && subj == stack.subj;
+        return getIdx() == stack.getIdx() &&
+                getCleanIdx() == stack.getCleanIdx() &&
+                getUndoLimit() == stack.getUndoLimit() &&
+                suspend == stack.suspend &&
+                getSubj() == stack.getSubj() &&
+                Objects.equals(commands, stack.commands) &&
+                Objects.equals(macroCmd, stack.macroCmd);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(idx, subj, commands);
+        return Objects.hash(getSubj());
     }
 
     /**
@@ -537,7 +678,7 @@ public class UndoStack implements Serializable{
 
         if (this.idx != index) {
             this.idx = index;
-            if(null != watcher){
+            if (null != watcher) {
                 watcher.indexChanged(idx);
                 watcher.canUndoChanged(canUndo());
                 watcher.undoTextChanged(undoCaption());
@@ -546,12 +687,12 @@ public class UndoStack implements Serializable{
             }
         }
 
-        if(clean) {
+        if (clean) {
             cleanIdx = idx;
         }
 
         final boolean isClean = idx == cleanIdx;
-        if(isClean != wasClean && null != watcher) {
+        if (isClean != wasClean && null != watcher) {
             watcher.cleanChanged(isClean);
         }
     }
@@ -562,23 +703,23 @@ public class UndoStack implements Serializable{
      */
     private void checkUndoLimit() {
 
-        if( undoLimit <= 0
+        if (undoLimit <= 0
                 || (commands == null)
                 || undoLimit >= commands.size()
-                || (macroStack != null && macroStack.size() > 0) ) {
+                || (null != macroCmd)) {
             return;
         }
 
         int delCnt = commands.size() - undoLimit;
-        for(int i = 0; i < delCnt; ++i) {
+        for (int i = 0; i < delCnt; ++i) {
             commands.remove(0);
         }
 
         idx -= delCnt;
-        if(cleanIdx != -1) {
-            if(cleanIdx < delCnt) {
+        if (cleanIdx != -1) {
+            if (cleanIdx < delCnt) {
                 cleanIdx = -1;
-            }else {
+            } else {
                 cleanIdx -= delCnt;
             }
         }

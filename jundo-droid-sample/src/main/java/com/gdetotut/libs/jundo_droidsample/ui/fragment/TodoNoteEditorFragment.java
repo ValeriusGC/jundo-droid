@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -11,10 +12,17 @@ import com.gdetotut.libs.jundo_droidsample.R;
 import com.gdetotut.libs.jundo_droidsample.mvp.presenters.TodoNoteEditorPresenter;
 import com.gdetotut.libs.jundo_droidsample.mvp.views.TodoNoteEditorView;
 
+import butterknife.BindView;
+
 public class TodoNoteEditorFragment extends MvpAppCompatFragment implements TodoNoteEditorView {
     public static final String TAG = "TodoNoteEditorFragment";
+
     @InjectPresenter
     TodoNoteEditorPresenter mTodoNoteEditorPresenter;
+
+    @BindView(R.id.todo_edit_text)
+    EditText editText;
+
 
     public static TodoNoteEditorFragment newInstance() {
         TodoNoteEditorFragment fragment = new TodoNoteEditorFragment();
@@ -34,6 +42,8 @@ public class TodoNoteEditorFragment extends MvpAppCompatFragment implements Todo
     @Override
     public void onViewCreated(final View view, final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        getArguments();
 
     }
 }

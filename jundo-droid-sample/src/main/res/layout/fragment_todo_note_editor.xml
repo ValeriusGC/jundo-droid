@@ -8,7 +8,12 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:caption="TodoNoteEditorFragment"/>
+        android:text="TodoNoteEditorFragment"/>
+
+    <EditText
+        android:id="@+id/todo_edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
 
 </FrameLayout>

@@ -78,6 +78,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     // Adapter for RecyclerView
     private MainActivityAdapter mAdapter = new MainActivityAdapter();
 
+    List<BriefNote> lst;
+
     public static Intent getIntent(final Context context) {
         Intent intent = new Intent(context, MainActivity.class);
 
@@ -127,7 +129,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
 
 
     protected void onListItemClicked(RecyclerView recyclerView, int position, View v) {
-        Toast.makeText(this, "MainActivity.onListItemClicked", Toast.LENGTH_SHORT).show();
+        //Log.d(TAG, mAdapter.getNotes().get(position).getTitle());
+        int adapterPosition = recyclerView.getChildAdapterPosition(v);
+        int sectionIndex = mAdapter.getSectionForAdapterPosition(adapterPosition);
+        int itemIndex = mAdapter.getPositionOfItemInSection(sectionIndex, adapterPosition);
+        Log.d(TAG, mAdapter.getNotes().get(itemIndex).getTitle());
+        Toast.makeText(this, "MainActivity.onListItemClicked: " + v, Toast.LENGTH_SHORT).show();
     }
 
     protected boolean onListItemLongClicked(RecyclerView recyclerView, int position, View v) {
@@ -160,6 +167,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     public void onEditorShow(@EditModeActivity.EditorType int type) {
         Intent intent = EditModeActivity.getIntent(this);
         intent.putExtra(EditModeActivity.PARAM_TYPE, type);
+
+        //mAdapter.getNotes().get(mAdapter.)
+
+
+
         startActivityForResult(intent, REQUEST_CODE_EDIT_MODE);
     }
 

@@ -9,6 +9,9 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        multiDexEnabled true
+
     }
     buildTypes {
         release {
@@ -38,7 +41,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 
-
     // Moxy
     compile libraries.moxy
     compile libraries.moxyAppCompat
@@ -61,5 +63,15 @@ dependencies {
 
     // StickyHeaders
     compile libraries.stickyheaders
+
+    implementation libraries.jundo_droid
+//    implementation 'com.gdetotut:jundo-framework:1.17.3.android-SNAPSHOT'
+
+    implementation 'com.google.code.gson:gson:2.8.2'
+
+    // Robolectric tests
+    implementation 'org.robolectric:robolectric:3.0'
+//    implementation 'org.assertj:assertj-core:1.7.1'
+
 
 }

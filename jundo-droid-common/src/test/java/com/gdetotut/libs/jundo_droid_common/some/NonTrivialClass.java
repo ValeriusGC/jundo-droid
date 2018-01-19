@@ -1,9 +1,7 @@
 package com.gdetotut.libs.jundo_droid_common.some;
 
-
 import com.gdetotut.libs.jundo_droid_common.UndoCommand;
-
-import org.jetbrains.annotations.NotNull;
+import com.gdetotut.libs.jundo_droid_common.UndoStack;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -59,14 +57,14 @@ public class NonTrivialClass implements Serializable {
     public static class AddCommand extends UndoCommand {
 
         private final NonTrivialClass scene;
-        private final Item item;
-        private final int initialPos;
+        private final Item.Type type;
+        private Item item = null;
+        private int initialPos = 0;
 
-        public AddCommand(Item.Type type, NonTrivialClass scene, UndoCommand parent) {
-            super("", parent);
+        public AddCommand(UndoStack owner, Item.Type type, NonTrivialClass scene, UndoCommand parent) {
+            super(owner, "", parent);
             this.scene = scene;
-            item = new Item(type);
-            initialPos = this.scene.items.size() * 2;
+            this.type = type;
             setCaption(ConstForTest.CMD_ADD + " at " + initialPos);
         }
 
@@ -77,6 +75,10 @@ public class NonTrivialClass implements Serializable {
 
         @Override
         protected void doRedo() {
+            if (null == item) {
+                item = new Item(type);
+                initialPos = scene.items.size() * 2;
+            }
             scene.items.add(item);
             item.x = initialPos;
         }
@@ -104,8 +106,8 @@ public class NonTrivialClass implements Serializable {
         private final NonTrivialClass scene;
         private final Item item;
 
-        public DeleteCommand(NonTrivialClass scene, UndoCommand parent) {
-            super("", parent);
+        public DeleteCommand(UndoStack owner, NonTrivialClass scene, UndoCommand parent) {
+            super(owner, "", parent);
             this.scene = scene;
             this.item = scene.items.size() > 0 ? scene.items.get(0) : null;
             setCaption(ConstForTest.CMD_DEL + " at " + item.x);
@@ -113,14 +115,14 @@ public class NonTrivialClass implements Serializable {
 
         @Override
         protected void doUndo() {
-            if(item != null){
+            if (item != null) {
                 scene.items.add(item);
             }
         }
 
         @Override
         protected void doRedo() {
-            if(item != null) {
+            if (item != null) {
                 scene.items.remove(item);
             }
 
@@ -150,8 +152,8 @@ public class NonTrivialClass implements Serializable {
         private final int oldPos;
         private int newPos;
 
-        public MovedCommand(Item item, int oldPos, UndoCommand parent) {
-            super("", parent);
+        public MovedCommand(UndoStack owner, Item item, int oldPos, UndoCommand parent) {
+            super(owner, "", parent);
             this.item = item;
             this.oldPos = oldPos;
             this.newPos = item.x;
@@ -169,10 +171,10 @@ public class NonTrivialClass implements Serializable {
         }
 
         @Override
-        public boolean mergeWith(@NotNull UndoCommand cmd) {
-            if(cmd instanceof MovedCommand){
+        public boolean mergeWith(UndoCommand cmd) {
+            if (cmd instanceof MovedCommand) {
                 Item item = ((MovedCommand) cmd).item;
-                if(item == this.item) {
+                if (item == this.item) {
                     newPos = item.x;
                     setCaption(ConstForTest.CMD_MOV + " to " + item.x);
                     return true;

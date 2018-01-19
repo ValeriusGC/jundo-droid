@@ -1,32 +1,31 @@
 package com.gdetotut.libs.jundo_droid_common;
 
-
 import com.gdetotut.libs.jundo_droid_common.some.SimpleClass;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestUndoGroup  extends BaseTest{
+public class UndoGroupTest {
 
     /**
      * Group should not contain two or more stacks with one object.
      */
     @Test
-    public void oneGroupOneObject() {
+    public void testOneGroupOneObject() {
 
         SimpleClass<Integer> subj = new SimpleClass<>(Integer.class);
         UndoGroup group = new UndoGroup();
-        UndoStack stackA = new UndoStack(subj, group);
+        new UndoStack(subj, group);
         assertEquals(1, group.getStacks().size());
-        UndoStack stackB = new UndoStack(subj, group);
+        new UndoStack(subj, group);
+        // See that 2nd stack with the same subject is not added to the group...
         assertEquals(1, group.getStacks().size());
 
         SimpleClass<Integer> subj2 = new SimpleClass<>(Integer.class);
-        UndoStack stackC = new UndoStack(subj2, group);
-        group.add(stackC);
+        // ...And with another one is added.
+        new UndoStack(subj2, group);
         assertEquals(2, group.getStacks().size());
-
 
     }
 
