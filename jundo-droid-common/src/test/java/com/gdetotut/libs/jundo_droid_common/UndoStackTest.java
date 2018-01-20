@@ -7,27 +7,37 @@ import com.gdetotut.libs.jundo_droid_common.some.SimpleUndoWatcher;
 import com.gdetotut.libs.jundo_droid_common.some.TextSample;
 import com.gdetotut.libs.jundo_droid_common.some.TextSampleCommands;
 
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 import static com.gdetotut.libs.jundo_droid_common.some.NonTrivialClass.Item.Type.CIRCLE;
 import static com.gdetotut.libs.jundo_droid_common.some.NonTrivialClass.Item.Type.RECT;
 import static com.gdetotut.libs.jundo_droid_common.some.TextSampleCommands.SUBJ_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class UndoStackTest implements Serializable {
 
     UndoStack stack;
     Object[] arr;
     Serializable subj;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     /**
      * Helper function.
      */
     @SuppressWarnings("unchecked")
-    public <V extends Serializable> void initSimple(Class<V> type, V[] array) {
+    public <V extends Serializable> void initSimple(Class<V> type, V[] array) throws Exception {
         arr = array;
         subj = new SimpleClass<V>(type);
         stack = new UndoStack(subj, null);
@@ -70,6 +80,130 @@ public class UndoStackTest implements Serializable {
     }
 
 
+    @Test
+    public void testGetLocalContexts() {
+        Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+        assertNotNull(stack);
+    }
+
+    @Test
+    public void testGetCommand() {
+        Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+        assertEquals(null, stack.getCommand(0));
+        assertEquals(null, stack.getCommand(-1));
+        assertEquals(null, stack.getCommand(1000));
+    }
+
+    @Test
+    public void testStackCompare() {
+        UndoStack stack1 = new UndoStack(new Point(1, 1), null);
+        UndoStack stack2 = new UndoStack(new Point(1, 1), null);
+        assertNotEquals(stack1, stack2);
+    }
+
+
+    @Test
+    public void testClear() throws Exception {
+
+        Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+
+        // for 100% test coverage
+        stack.clear();
+
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 2, null));
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 4, null));
+        stack.clear();
+        assertEquals(0, stack.count());
+        assertEquals(0, stack.getIdx());
+
+        // children
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 2, null));
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 2, null));
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 2, null));
+        assertEquals(3, stack.count());
+
+        UndoCommand parent = stack.getCommand(0);
+        new RefCmd<>(stack, "", pt::getX, pt::setX, 20, parent);
+        new RefCmd<>(stack, "", pt::getX, pt::setX, 30, parent);
+        assertEquals(2, parent.childCount());
+        assertEquals(3, stack.count());
+        stack.clear();
+        assertEquals(0, stack.count());
+        assertEquals(0, parent.childCount());
+    }
+
+    @Test
+    public void testSetClean() throws Exception {
+        Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 2, null));
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 4, null));
+        stack.setClean();
+        assertEquals(2, stack.getCleanIdx());
+    }
+
+    @Test
+    public void testIsClean() throws Exception {
+        Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 2, null));
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 4, null));
+        stack.setClean();
+        stack.push(new RefCmd<>(stack, "", pt::getX, pt::setX, 3, null));
+        assertEquals(false, stack.isClean());
+        stack.undo();
+        assertEquals(true, stack.isClean());
+    }
+
+    @Test
+    public void testUndoCaption() throws Exception {
+        Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+        stack.push(new RefCmd<>(stack, "1", pt::getX, pt::setX, 2, null));
+        stack.push(new RefCmd<>(stack, "2", pt::getX, pt::setX, 4, null));
+        stack.push(new RefCmd<>(stack, "3", pt::getX, pt::setX, 4, null));
+        assertEquals("3", stack.undoCaption());
+        stack.undo();
+        assertEquals("2", stack.undoCaption());
+        stack.setIndex(0);
+        assertEquals("", stack.undoCaption());
+    }
+
+    @Test
+    public void testRedoCaption() throws Exception {
+        Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+        stack.push(new RefCmd<>(stack, "1", pt::getX, pt::setX, 2, null));
+        stack.push(new RefCmd<>(stack, "2", pt::getX, pt::setX, 4, null));
+        stack.push(new RefCmd<>(stack, "3", pt::getX, pt::setX, 4, null));
+        assertEquals("", stack.redoCaption());
+        stack.undo();
+        assertEquals("3", stack.redoCaption());
+        stack.setIndex(0);
+        assertEquals("1", stack.redoCaption());
+    }
+
+    @Test
+    public void testCaption() throws Exception {
+        Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+        assertEquals("", stack.caption(0));
+
+        stack.push(new RefCmd<>(stack, "1", pt::getX, pt::setX, 2, null));
+        stack.push(new RefCmd<>(stack, "2", pt::getX, pt::setX, 4, null));
+        stack.push(new RefCmd<>(stack, "3", pt::getX, pt::setX, 4, null));
+        assertEquals("1", stack.caption(0));
+        assertEquals("2", stack.caption(1));
+        assertEquals("3", stack.caption(2));
+
+        assertEquals("", stack.caption(-1));
+        assertEquals("", stack.caption(1000));
+
+    }
+
     /**
      * Simply shows how elegant {@link RefCmd} works
      */
@@ -78,6 +212,11 @@ public class UndoStackTest implements Serializable {
 
         Point pt = new Point(-30, -40);
         UndoStack stack = new UndoStack(pt, null);
+
+        // for 100% test coverage
+        stack.undo();
+        stack.redo();
+
         stack.push(new RefCmd<>(stack, "Change x", pt::getX, pt::setX, 10, null));
         stack.push(new RefCmd<>(stack, "Change y", pt::getY, pt::setY, 20, null));
         assertEquals(2, stack.count());
@@ -113,8 +252,47 @@ public class UndoStackTest implements Serializable {
         stackBack.redo();
         assertEquals(10, ptBack.getX());
         assertEquals(20, ptBack.getY());
+    }
 
+    // null subject
+    @Test
+    public void testException1() {
+        thrown.expect(NullPointerException.class);
+        new UndoStack(null, null);
+        thrown = ExpectedException.none();
+    }
 
+    // Pushing null command
+    @Test
+    public void testException2() throws Exception {
+        thrown.expect(NullPointerException.class);
+        new UndoStack(new Point(1, 1), null).push(null);
+        thrown = ExpectedException.none();
+    }
+
+    // null subject 2
+    @Test
+    public void testException3() throws Exception {
+        UndoStack stack = new UndoStack(new Point(0, 0), null);
+        thrown.expect(Exception.class);
+        stack.clone(null);
+        thrown = ExpectedException.none();
+    }
+
+    // null subject 2
+    @Test
+    public void testException4() {
+        UndoStack stack = new UndoStack(new Point(0, 0), null);
+        thrown.expect(NullPointerException.class);
+        stack.setSubj(null);
+        thrown = ExpectedException.none();
+    }
+
+    @Test
+    public void testException5() {
+        thrown.expect(NullPointerException.class);
+        new UndoStack(null, null);
+        thrown = ExpectedException.none();
     }
 
     /**
@@ -221,6 +399,16 @@ public class UndoStackTest implements Serializable {
 
     }
 
+    @Test
+    public void testSetIndex() throws Exception {
+        NonTrivialClass scene = new NonTrivialClass();
+        UndoStack stack = new UndoStack(scene, null);
+        stack.push(new NonTrivialClass.AddCommand(stack, CIRCLE, scene, null));
+        assertEquals(1, stack.getIdx());
+        stack.setIndex(-1);
+        assertEquals(0, stack.getIdx());
+    }
+
     /**
      * Set and check limits:
      * - undoLimit
@@ -233,6 +421,8 @@ public class UndoStackTest implements Serializable {
         UndoGroup group = new UndoGroup();
         UndoStack stack = new UndoStack(subj, group);
         stack.setWatcher(new SimpleUndoWatcher());
+        stack.setUndoLimit(5);
+        // for 100% test cover
         stack.setUndoLimit(5);
         for (int i = 0; i < 10; ++i) {
             stack.push(new RefCmd<>(stack, String.valueOf(i), subj::getValue, subj::setValue, i, null));
@@ -259,6 +449,12 @@ public class UndoStackTest implements Serializable {
         UndoGroup group = new UndoGroup();
         UndoStack stack = new UndoStack(subj, group);
         stack.setWatcher(new SimpleUndoWatcher());
+
+        // Without commands not affected
+        assertEquals(0, stack.getIdx());
+        stack.setIndex(2);
+        assertEquals(0, stack.getIdx());
+
         for (int i = 0; i < 10; ++i) {
             stack.push(new RefCmd<>(stack, String.valueOf(i), subj::getValue, subj::setValue, i, null));
         }
@@ -291,6 +487,29 @@ public class UndoStackTest implements Serializable {
         stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
         assertEquals(-1, stack.getCleanIdx());
         assertEquals(false, stack.isClean());
+
+        // It should change cleanIdx
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        stack.setClean();
+        assertEquals(5, stack.getCleanIdx());
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        assertEquals(4, stack.getCleanIdx());
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        assertEquals(3, stack.getCleanIdx());
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        assertEquals(2, stack.getCleanIdx());
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        assertEquals(1, stack.getCleanIdx());
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        assertEquals(0, stack.getCleanIdx());
+        stack.push(new RefCmd<>(stack, String.valueOf(10), subj::getValue, subj::setValue, 10, null));
+        assertEquals(-1, stack.getCleanIdx());
+
+
     }
 
     /**
@@ -305,6 +524,7 @@ public class UndoStackTest implements Serializable {
         UndoGroup group = new UndoGroup();
         UndoStack stack = new UndoStack(subj, group);
         stack.setWatcher(new SimpleUndoWatcher());
+        assertNotNull(stack.getWatcher());
         group.setActive(stack);
         assertEquals(false, stack.canUndo());
         assertEquals(false, stack.canRedo());
@@ -539,7 +759,7 @@ public class UndoStackTest implements Serializable {
      * <p>Makes command chain without using macrocommands.
      */
     @Test
-    public void testChain() {
+    public void testChain() throws Exception {
 
         {
             // Independently
@@ -636,6 +856,21 @@ public class UndoStackTest implements Serializable {
         stack.push(new TextSampleCommands.AddString(stack, "new string", "Hello", null));
         stack.push(new TextSampleCommands.AddString(stack, "new string", ", ", null));
         stack.push(new TextSampleCommands.AddString(stack, "new string", "world!", null));
+
+        // some method inside macros shouldn't work (for 100% test coverage)
+        stack.setClean();
+        stack.isClean();
+        stack.undo();
+        stack.redo();
+        stack.setIndex(0);
+        stack.setUndoLimit(4);
+        assertEquals(false, stack.canUndo());
+        assertEquals(false, stack.canRedo());
+        assertEquals("", stack.undoCaption());
+        assertEquals("", stack.redoCaption());
+        stack.beginMacro("another macro");
+        // ~
+
         stack.endMacro();
         String s2 = "Hello, world!";
         testText.add(s2);
@@ -685,20 +920,14 @@ public class UndoStackTest implements Serializable {
 
         UndoStack stack1 = UndoPacket
                 .peek(pack, null)
-                .restore(new UndoPacket.OnRestore() {
-                    @Override
-                    public Object handle(Serializable processedSubj, UndoPacket.SubjInfo subjInfo) {
-                        // Always return null for unexpected result.
-                        return SUBJ_ID.equals(subjInfo.id) ? (ArrayList<String>) processedSubj : null;
-                    }
+                .restore((processedSubj, subjInfo) -> {
+                    // Always return null for unexpected result.
+                    return SUBJ_ID.equals(subjInfo.id) ? (ArrayList<String>) processedSubj : null;
                 })
-                .stack(new UndoPacket.OnPrepareStack() {
-                    @Override
-                    public void apply(UndoStack stack, UndoPacket.SubjInfo subjInfo) {
-                        stack.getLocalContexts().put(TextSampleCommands.TEXT_CTX_KEY, subj1);
-                        subj1.clear();
-                        subj1.text.addAll((ArrayList<String>) stack.getSubj());
-                    }
+                .stack((stack2, subjInfo) -> {
+                    stack2.getLocalContexts().put(TextSampleCommands.TEXT_CTX_KEY, subj1);
+                    subj1.clear();
+                    subj1.text.addAll((ArrayList<String>) stack2.getSubj());
                 });
 
         assertEquals(5, stack1.count());
@@ -734,7 +963,7 @@ public class UndoStackTest implements Serializable {
         assertEquals(subj1, testText);
         System.out.println(subj1.print());
 
-        // Use macros from zero point
+        // Use macros from zero subj
         stack1.setIndex(0);
         stack1.push(new TextSampleCommands.AddLine(stack1, "new line", null));
         stack1.push(macro1);
@@ -746,5 +975,38 @@ public class UndoStackTest implements Serializable {
         assertEquals(2, stack1.count());
 
     }
+
+    // for 100% test coverage
+    @Test
+    public void testMacros2() {
+        final Point pt = new Point(1, 1);
+        UndoStack stack = new UndoStack(pt, null);
+        stack.setWatcher(new SimpleUndoWatcher());
+        assertEquals(null, stack.getMacros());
+        stack.beginMacro("macro 1");
+        stack.endMacro();
+        assertEquals(1, stack.getMacros().size());
+
+        // for 100% code coverage
+        stack.endMacro();
+        stack.dropMacro();
+        new RefCmd<>(stack, "1", pt::getX, pt::setX, 2, null);
+        new RefCmd<>(stack, "2", pt::getX, pt::setX, 3, null);
+        stack.setClean();
+        stack.setIndex(0);
+        stack.beginMacro("macro 2");
+        stack.endMacro();
+        //~
+
+    }
+
+    @Test
+    public void hash() {
+        HashMap<UndoStack, Integer> map = new HashMap<>();
+        map.put(new UndoStack(new Point(1, 2), null), null);
+        map.put(new UndoStack(new Point(1, 2), null), null);
+        assertEquals(2, map.size());
+    }
+
 
 }

@@ -1,14 +1,6 @@
 package com.gdetotut.libs.jundo_droidsample;
 
-import com.gdetotut.libs.jundo_droid_common.RefCmd;
-import com.gdetotut.libs.jundo_droid_common.UndoPacket;
-import com.gdetotut.libs.jundo_droid_common.UndoStack;
-
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricGradleTestRunner;
-
-import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 

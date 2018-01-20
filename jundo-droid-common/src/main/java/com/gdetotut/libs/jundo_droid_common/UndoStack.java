@@ -143,18 +143,13 @@ public class UndoStack implements Serializable {
      *
      * @param cmd new command to execute. Required.
      */
-    public void push(UndoCommand cmd) {
+    public void push(UndoCommand cmd) throws Exception {
 
         if (cmd == null) {
             throw new NullPointerException("cmd");
         } else if (!suspend) {
 
-            UndoCommand copy = null;
-            try {
-                copy = clone(cmd);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            UndoCommand copy = clone(cmd);
 
             cmd.redo();
 
@@ -281,12 +276,12 @@ public class UndoStack implements Serializable {
      * this function does nothing.
      */
     public void redo() {
-        if (commands == null || idx == commands.size()) {
+        if (macroCmd != null) {
+            System.err.println("UndoStack.redo(): cannot redo in the middle of a macro");
             return;
         }
 
-        if (null != macroCmd) {
-            System.err.println("UndoStack.redo(): cannot redo in the middle of a macro");
+        if (commands == null || idx == commands.size()) {
             return;
         }
 
@@ -524,6 +519,7 @@ public class UndoStack implements Serializable {
 
         if (commands != null && commands.size() > 0) {
             System.err.println("UndoStack.setUndoLimit(): an undo limit can only be set when the stack is empty");
+            return;
         }
 
         if (value == undoLimit) {
@@ -620,6 +616,7 @@ public class UndoStack implements Serializable {
      * @throws Exception If something goes wrong.
      */
     public UndoCommand clone(UndoCommand cmd) throws Exception {
+
         if (null == cmd) {
             throw new NullPointerException("cmd");
         }
