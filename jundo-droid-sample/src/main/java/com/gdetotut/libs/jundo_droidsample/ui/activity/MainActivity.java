@@ -1,6 +1,7 @@
 package com.gdetotut.libs.jundo_droidsample.ui.activity;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Parcelable;
@@ -8,7 +9,6 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -17,6 +17,8 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.gdetotut.libs.jundo_droidsample.R;
@@ -26,6 +28,7 @@ import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
 import com.gdetotut.libs.jundo_droidsample.mvp.presenters.MainPresenter;
 import com.gdetotut.libs.jundo_droidsample.mvp.views.MainView;
 import com.gdetotut.libs.jundo_droidsample.ui.adapters.MainActivityAdapter;
+import com.gdetotut.libs.jundo_droidsample.ui.adapters.SectionedAdapter;
 import com.gordonwong.materialsheetfab.MaterialSheetFab;
 import com.gordonwong.materialsheetfab.MaterialSheetFabEventListener;
 
@@ -52,7 +55,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     private static final int REQUEST_CODE_EDIT_MODE = 1001;
 
     @InjectPresenter
-    MainPresenter mPresenter;
+    MainPresenter presenter;
 
     @BindView(R.id.appBar)
     AppBarLayout mAppBarLayout;
@@ -72,11 +75,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     // Common class for FAB
     private MaterialSheetFab mFab;
 
+    MaterialDialog delDlg = null;
+
     // Saves previous bar color
     private int mStatusBarColor;
 
     // Adapter for RecyclerView
-    private MainActivityAdapter mAdapter = new MainActivityAdapter();
+    private SectionedAdapter adapter = new SectionedAdapter();
 
     List<BriefNote> lst;
 
@@ -100,7 +105,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         }
 
         mRecyclerView.setLayoutManager(new StickyHeaderLayoutManager());
-        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setAdapter(adapter);
 
         // Bind methods to events
         ItemClickSupport.addTo(mRecyclerView).setOnItemClickListener(this::onListItemClicked);
@@ -129,16 +134,24 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
 
 
     protected void onListItemClicked(RecyclerView recyclerView, int position, View v) {
-        //Log.d(TAG, mAdapter.getNotes().get(position).getTitle());
+        //Log.d(TAG, adapter.getNotes().get(position).getTitle());
         int adapterPosition = recyclerView.getChildAdapterPosition(v);
-        int sectionIndex = mAdapter.getSectionForAdapterPosition(adapterPosition);
-        int itemIndex = mAdapter.getPositionOfItemInSection(sectionIndex, adapterPosition);
-        Log.d(TAG, mAdapter.getNotes().get(itemIndex).getTitle());
-        Toast.makeText(this, "MainActivity.onListItemClicked: " + v, Toast.LENGTH_SHORT).show();
+        int sectionIndex = adapter.getSectionForAdapterPosition(adapterPosition);
+        int itemIndex = adapter.getPositionOfItemInSection(sectionIndex, adapterPosition);
+        Object o = v.getTag();
+//        BriefNote note = (BriefNote)o;
+        Toast.makeText(this, "MainActivity.onListItemClicked: " + o, Toast.LENGTH_SHORT).show();
     }
 
     protected boolean onListItemLongClicked(RecyclerView recyclerView, int position, View v) {
-        Toast.makeText(this, "MainActivity.onListItemLongClicked: ", Toast.LENGTH_SHORT).show();
+        int adapterPosition = recyclerView.getChildAdapterPosition(v);
+        int sectionIndex = adapter.getSectionForAdapterPosition(adapterPosition);
+        int itemIndex = adapter.getPositionOfItemInSection(sectionIndex, adapterPosition);
+        Object o = v.getTag();
+
+        presenter.showDelDlg(o);
+
+        // Why false...?
         return false;
     }
 
@@ -160,7 +173,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     @Override
     public void loadData(@NonNull List<BriefNote> list) {
         Log.d(TAG, "loadData");
-        mAdapter.setNotes(list);
+        adapter.setNotes(list);
     }
 
     @Override
@@ -168,9 +181,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         Intent intent = EditModeActivity.getIntent(this);
         intent.putExtra(EditModeActivity.PARAM_TYPE, type);
 
-        //mAdapter.getNotes().get(mAdapter.)
-
-
+        //adapter.getNotes().get(adapter.)
 
         startActivityForResult(intent, REQUEST_CODE_EDIT_MODE);
     }
@@ -178,6 +189,32 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     @Override
     public void updateView() {
         Log.d(TAG, "updateView");
+    }
+
+    @Override
+    public void showDelDlg(Object o) {
+        delDlg = new MaterialDialog.Builder(this)
+                .content(String.format("Delete %s?", o))
+                .positiveText("Да")
+                .negativeText("Нет")
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        presenter.closeDlg();
+                        presenter.closeDlg();
+                    }
+                })
+                .onNegative((dialog, which) -> presenter.closeDlg())
+                .dismissListener(dialogInterface -> presenter.closeDlg())
+                .show();
+    }
+
+    @Override
+    public void closeDlg() {
+        if(delDlg != null) {
+            delDlg.setOnDismissListener(null);
+            delDlg.cancel();
+        }
     }
 
     /**
@@ -233,7 +270,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Toast.makeText(this, "MainActivity.requestCode: " + requestCode, Toast.LENGTH_SHORT).show();
-        mPresenter.updateView();
+        presenter.updateView();
     }
 
     /**
@@ -243,7 +280,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
      */
     private void clickFab(@EditModeActivity.EditorType int type) {
         mFab.hideSheet();
-        mPresenter.showEditor(type);
+        presenter.showEditor(type);
     }
 
     private int getStatusBarColor() {

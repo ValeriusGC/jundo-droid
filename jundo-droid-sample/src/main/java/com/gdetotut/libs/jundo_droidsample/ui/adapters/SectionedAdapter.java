@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.gdetotut.libs.jundo_droidsample.R;
 import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
+
 import org.zakariya.stickyheaders.SectioningAdapter;
 
 import java.text.SimpleDateFormat;
@@ -17,25 +18,20 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import static com.gdetotut.libs.jundo_droidsample.ui.adapters.SectionedAdapter.SubjInfo.IS_ITEM;
+import static com.gdetotut.libs.jundo_droidsample.ui.adapters.SectionedAdapter.SubjInfo.IS_SECTION;
 
 /**
  * Created by valerius on 30.06.17.
  *
  * @author valerius
  */
-public class MainActivityAdapter extends SectioningAdapter {
+public class SectionedAdapter extends SectioningAdapter {
 
     private class Section {
-        String date;
         ArrayList<BriefNote> notes = new ArrayList<>();
-
-        @Override
-        public String toString() {
-            return "Section{" +
-                    date +
-                    ", notes=" + notes.size() +
-                    '}';
-        }
     }
 
     public class ItemViewHolder extends SectioningAdapter.ItemViewHolder {
@@ -56,10 +52,28 @@ public class MainActivityAdapter extends SectioningAdapter {
         }
     }
 
-    List<BriefNote> mNotes;
-    LinkedHashMap<String, Section> mSections = new LinkedHashMap<>();
+    /**
+     * Inner information
+     */
+    static class SubjInfo {
+        static final boolean IS_SECTION = true;
+        static final boolean IS_ITEM = true;
+        final boolean isSection;
+        final Object subj;
+        final int sectionIdx;
+        final int itemIdx;
+
+        public SubjInfo(boolean isSection, Object subj, int sectionIdx, int itemIdx) {
+            this.isSection = isSection;
+            this.subj = subj;
+            this.sectionIdx = sectionIdx;
+            this.itemIdx = itemIdx;
+        }
+    }
 
     List<Section> sections = new ArrayList<>();
+    List<String> captions = new ArrayList<>();
+    Map<Object, SubjInfo> cursors = new HashMap<>();
 
     // Сущность должна соответствовать задачам адаптера:
     // <Object, Entity>, где
@@ -68,11 +82,7 @@ public class MainActivityAdapter extends SectioningAdapter {
 
     //ArrayList<Section> mSections = new ArrayList<>();
 
-    public MainActivityAdapter() {
-    }
-
-    public List<BriefNote> getNotes() {
-        return mNotes;
+    public SectionedAdapter() {
     }
 
     public void delete(Object o) {
@@ -85,8 +95,8 @@ public class MainActivityAdapter extends SectioningAdapter {
     }
 
     public void setNotes(List<BriefNote> notes) {
-        this.mNotes = notes;
-        mSections.clear();
+        sections.clear();
+        cursors.clear();
 
         // Задача - раскидать заметки по секциям
         //  -------------------------------------
@@ -94,19 +104,24 @@ public class MainActivityAdapter extends SectioningAdapter {
         //      Взять из заметки дату
         //      По дате найти секцию или создать новую и добавить в карту
         //      Добавить заметку в секцию
-        if(this.mNotes.size() > 0){
-            for (int i=0; i< mNotes.size(); ++i) {
-                BriefNote note = mNotes.get(i);
+        if(notes.size() > 0){
+            for (int i=0; i< notes.size(); ++i) {
+                BriefNote note = notes.get(i);
                 Date date = new Date(note.getTime());
                 SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                String strDate = sdfDate.format(date);
-                Section currSection = mSections.get(strDate);;
-                if(currSection == null){
-                    currSection = new Section();
-                    currSection.date = strDate;
-                    mSections.put(strDate, currSection);
+                String cap = sdfDate.format(date);
+                int idx = captions.indexOf(cap);
+                Section sec = null;
+                if(idx < 0){
+                    captions.add(cap);
+                    sec = new Section();
+                    sections.add(sec);
+                    cursors.put(sec, new SubjInfo(IS_SECTION, sec, sections.size() - 1, -1));
+                }else {
+                    sec = sections.get(idx);
                 }
-                currSection.notes.add(note);
+                sec.notes.add(note);
+                cursors.put(sec, new SubjInfo(IS_ITEM, note, sections.size() - 1, sec.notes.size() - 1));
             }
         }
         notifyAllSectionsDataSetChanged();
@@ -114,13 +129,12 @@ public class MainActivityAdapter extends SectioningAdapter {
 
     @Override
     public int getNumberOfSections() {
-        return mSections.size();
+        return sections.size();
     }
 
     @Override
     public int getNumberOfItemsInSection(int sectionIndex) {
-        Section value = (new ArrayList<>(mSections.values())).get(sectionIndex);
-        return value.notes.size();
+        return sections.get(sectionIndex).notes.size();
     }
 
     @Override
@@ -149,7 +163,7 @@ public class MainActivityAdapter extends SectioningAdapter {
 
     @Override
     public void onBindItemViewHolder(SectioningAdapter.ItemViewHolder viewHolder, int sectionIndex, int itemIndex, int itemType) {
-        Section s = (new ArrayList<>(mSections.values())).get(sectionIndex);
+        Section s = sections.get(sectionIndex);
         ItemViewHolder ivh = (ItemViewHolder) viewHolder;
         BriefNote person = s.notes.get(itemIndex);
         ((ItemViewHolder) viewHolder).itemView.setTag(person);
@@ -159,10 +173,10 @@ public class MainActivityAdapter extends SectioningAdapter {
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindHeaderViewHolder(SectioningAdapter.HeaderViewHolder viewHolder, int sectionIndex, int headerType) {
-        Section s = (new ArrayList<>(mSections.values())).get(sectionIndex);
+        Section s = sections.get(sectionIndex);
         HeaderViewHolder hvh = (HeaderViewHolder) viewHolder;
         ((HeaderViewHolder) viewHolder).itemView.setTag(s);
-        hvh.titleTextView.setText(s.date);
+        hvh.titleTextView.setText(captions.get(sectionIndex));
     }
 
 

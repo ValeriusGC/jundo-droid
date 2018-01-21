@@ -40,6 +40,7 @@ public class EditModeActivity extends MvpAppCompatActivity implements EditModeVi
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({EDITOR_SIMPLE, EDITOR_LIST, EDITOR_TODO, EDITOR_MOOD})
     public @interface EditorType {}
+
     // Constant for Simple Editor
     public static final int EDITOR_SIMPLE = 0;
     // Constant for List Editor

@@ -177,4 +177,12 @@ public class MainPresenter extends MvpPresenter<MainView> {
     public void updateView() {
         getViewState().updateView();
     }
+
+    public void showDelDlg(Object o) {
+        getViewState().showDelDlg(o);
+    }
+
+    public void closeDlg() {
+        getViewState().closeDlg();
+    }
 }

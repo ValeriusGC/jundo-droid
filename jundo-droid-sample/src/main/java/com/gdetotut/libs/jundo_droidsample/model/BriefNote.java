@@ -1,5 +1,9 @@
 package com.gdetotut.libs.jundo_droidsample.model;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 /**
  * Represents brief view of Note
  */
@@ -22,4 +26,13 @@ public class BriefNote {
         return mTitle;
     }
 
+    @Override
+    public String toString() {
+        SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String strDate = sdfDate.format(new Date(getTime()));
+        return "BriefNote{" +
+                "mTime=" + strDate +
+                ", mTitle='" + mTitle + '\'' +
+                '}';
+    }
 }
