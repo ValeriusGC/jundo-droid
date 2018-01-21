@@ -1,5 +1,9 @@
 package com.gdetotut.libs.jundo_droidsample;
 
+import com.gdetotut.libs.jundo_droid_common.RefCmd;
+import com.gdetotut.libs.jundo_droid_common.UndoPacket;
+import com.gdetotut.libs.jundo_droid_common.UndoStack;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
