@@ -143,7 +143,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         Toast.makeText(this, "MainActivity.onListItemClicked: " + o, Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     *
+     * @param recyclerView
+     * @param position absolute position in the list.
+     * @param v
+     * @return
+     */
     protected boolean onListItemLongClicked(RecyclerView recyclerView, int position, View v) {
+
+        System.out.println("pos: " + position);
+
         int adapterPosition = recyclerView.getChildAdapterPosition(v);
         int sectionIndex = adapter.getSectionForAdapterPosition(adapterPosition);
         int itemIndex = adapter.getPositionOfItemInSection(sectionIndex, adapterPosition);

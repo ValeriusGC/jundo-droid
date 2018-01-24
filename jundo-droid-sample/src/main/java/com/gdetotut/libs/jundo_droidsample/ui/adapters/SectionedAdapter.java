@@ -30,7 +30,17 @@ import static com.gdetotut.libs.jundo_droidsample.ui.adapters.SectionedAdapter.S
  */
 public class SectionedAdapter extends SectioningAdapter {
 
-    private class Section {
+    /**
+     * Part of more base class BriefNote
+     */
+    private class Item {
+        final String title;
+        public Item(String title) {
+            this.title = title;
+        }
+    }
+
+    private static class Section {
         ArrayList<BriefNote> notes = new ArrayList<>();
     }
 
@@ -55,13 +65,18 @@ public class SectionedAdapter extends SectioningAdapter {
     /**
      * Inner information
      */
-    static class SubjInfo {
+    class SubjInfo {
         static final boolean IS_SECTION = true;
         static final boolean IS_ITEM = true;
         final boolean isSection;
         final Object subj;
         final int sectionIdx;
         final int itemIdx;
+        /**
+         * Presents absolute position in the adapter.
+         * Will get set when {@link org.zakariya.stickyheaders.SectioningAdapter.ViewHolder} will being bound to the View.
+         */
+        int pos = -1;
 
         public SubjInfo(boolean isSection, Object subj, int sectionIdx, int itemIdx) {
             this.isSection = isSection;
@@ -168,6 +183,8 @@ public class SectionedAdapter extends SectioningAdapter {
         BriefNote person = s.notes.get(itemIndex);
         ((ItemViewHolder) viewHolder).itemView.setTag(person);
         ivh.personNameTextView.setText(person.getTitle());
+        System.out.println("I.getAdapterPosition():" + viewHolder.getAdapterPosition());
+
     }
 
     @SuppressLint("SetTextI18n")
@@ -177,6 +194,7 @@ public class SectionedAdapter extends SectioningAdapter {
         HeaderViewHolder hvh = (HeaderViewHolder) viewHolder;
         ((HeaderViewHolder) viewHolder).itemView.setTag(s);
         hvh.titleTextView.setText(captions.get(sectionIndex));
+        System.out.println("S.getAdapterPosition():" + viewHolder.getAdapterPosition());
     }
 
 
