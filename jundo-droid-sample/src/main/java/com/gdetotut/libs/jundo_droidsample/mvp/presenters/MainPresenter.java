@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
+import com.gdetotut.libs.jundo_droid_common.UndoStack;
 import com.gdetotut.libs.jundo_droidsample.App;
 import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
 import com.gdetotut.libs.jundo_droidsample.model.BriefNoteManager;
@@ -16,6 +17,8 @@ import com.gdetotut.libs.jundo_droidsample.model.NoteLoader;
 import com.gdetotut.libs.jundo_droidsample.model.TypeOf;
 import com.gdetotut.libs.jundo_droidsample.mvp.views.MainView;
 import com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity;
+import com.gdetotut.libs.jundo_droidsample.ui.activity.MainActivity;
+import com.gdetotut.libs.jundo_droidsample.ui.activity.MainUndoCtrl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -48,6 +51,11 @@ public class MainPresenter extends MvpPresenter<MainView> {
     @Inject
     Context ctx;
 
+    /**
+     * This is a delicate moment. Storing DB state can be impossible...
+     */
+    public final UndoStack undoStack = new UndoStack("", null);
+
     private boolean mIsInLoading;
     private List<BriefNote> notes = new ArrayList<>();
 
@@ -58,6 +66,7 @@ public class MainPresenter extends MvpPresenter<MainView> {
 
     public MainPresenter() {
         App.getAppComponent().inject(this);
+        undoStack.getLocalContexts().put(MainUndoCtrl.LC_PRES, this);
     }
 
     @Override
@@ -132,6 +141,7 @@ public class MainPresenter extends MvpPresenter<MainView> {
         List<BriefNote> notes = manager.getAll();
         Collections.sort(notes, (n1, n2) -> n1.getTime().compareTo(n2.getTime()));
         getViewState().loadData(notes);
+        mIsInLoading = false;
     }
 
     private void onLoadingSuccess() {
@@ -179,4 +189,32 @@ public class MainPresenter extends MvpPresenter<MainView> {
         Collections.sort(notes, (n1, n2) -> n1.getTime().compareTo(n2.getTime()));
         return notes;
     }
+
+    public void del(List<BriefNote> notes) {
+        Log.d(MainActivity.TAG, "MainPresenter.del");
+        manager.del(notes);
+        loadData();
+    }
+
+    public void delByOids(List<TypeOf.Oid> oids) {
+        Log.d(MainActivity.TAG, "MainPresenter.delByOids");
+        manager.del(getByIod(oids));
+        loadData();
+    }
+
+
+    public void add(List<BriefNote> notes) {
+        manager.add(notes);
+        loadData();
+    }
+
+    public void addByOids(List<TypeOf.Oid> oids) {
+        for (TypeOf.Oid s : oids) {
+            BriefNote note = new BriefNote(s.getOid(), n.getTime(), n.getTitle());
+        }
+
+        manager.add(getByIod(oids));
+        loadData();
+    }
+
 }

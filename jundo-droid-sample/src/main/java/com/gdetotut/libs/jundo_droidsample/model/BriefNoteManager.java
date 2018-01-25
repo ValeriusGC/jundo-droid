@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.gdetotut.libs.jundo_droidsample.App;
+import com.gdetotut.libs.jundo_droidsample.ui.activity.MainActivity;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -65,12 +66,14 @@ public class BriefNoteManager {
     }
 
     public void save() {
+        Log.d(MainActivity.TAG, "BriefNoteManager::save " + notes.size());
         String json = new Gson().toJson(notes);
         SharedPreferences.Editor ed = ctx.getSharedPreferences(NAME, Context.MODE_PRIVATE).edit();
         ed.putString(LIST, json).apply();
     }
 
     public List<BriefNote> getAll() {
+        Log.d(MainActivity.TAG, "BriefNoteManager::getAll" + notes.size());
         return new ArrayList<>(notes.values());
     }
 
@@ -83,6 +86,26 @@ public class BriefNoteManager {
             }
         }
         return res;
+    }
+
+    public void del(List<BriefNote> notes) {
+        Log.d(MainActivity.TAG, "BriefNoteManager::del " + notes.size());
+        while (notes.size() > 0) {
+            BriefNote note = notes.remove(0);
+            this.notes.remove(note.getOid().getValue());
+        }
+        save();
+    }
+
+    public void add(List<BriefNote> notes) {
+        Log.d(MainActivity.TAG, "BriefNoteManager::add " + notes.size());
+        while (notes.size() > 0) {
+            BriefNote n = notes.remove(0);
+            BriefNote note = new BriefNote(n.getOid(), n.getTime(), n.getTitle());
+            Log.d(MainActivity.TAG, "BriefNoteManager::add note " + note);
+            this.notes.put(note.getOid().getValue(), note);
+        }
+        save();
     }
 
 }

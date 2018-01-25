@@ -1,7 +1,6 @@
 package com.gdetotut.libs.jundo_droidsample.ui.activity;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Parcelable;
@@ -13,6 +12,8 @@ import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -21,6 +22,7 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.gdetotut.libs.jundo_droid_common.UndoWatcher;
 import com.gdetotut.libs.jundo_droidsample.R;
 import com.gdetotut.libs.jundo_droidsample.commons.Fab;
 import com.gdetotut.libs.jundo_droidsample.commons.ItemClickSupport;
@@ -28,7 +30,7 @@ import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
 import com.gdetotut.libs.jundo_droidsample.model.TypeOf;
 import com.gdetotut.libs.jundo_droidsample.mvp.presenters.MainPresenter;
 import com.gdetotut.libs.jundo_droidsample.mvp.views.MainView;
-import com.gdetotut.libs.jundo_droidsample.ui.adapters.MainActivityAdapter;
+import com.gdetotut.libs.jundo_droidsample.ui.activity.MainUndoCtrl.RemoveItemUndo;
 import com.gdetotut.libs.jundo_droidsample.ui.adapters.SectionedAdapter;
 import com.gordonwong.materialsheetfab.MaterialSheetFab;
 import com.gordonwong.materialsheetfab.MaterialSheetFabEventListener;
@@ -45,7 +47,8 @@ import static com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity.E
 import static com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity.EDITOR_SIMPLE;
 import static com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity.EDITOR_TODO;
 
-public class MainActivity extends MvpAppCompatActivity implements MainView {
+public class MainActivity extends MvpAppCompatActivity
+        implements MainView, UndoWatcher {
 
     // Use as symbol in Log.
     public static final String TAG = MainActivity.class.getSimpleName();
@@ -72,6 +75,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
 
     @BindView(R.id.fab)
     Fab mFabView;
+
+    MenuItem undoItem = null;
+    MenuItem redoItem = null;
 
     // Common class for FAB
     private MaterialSheetFab mFab;
@@ -114,6 +120,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
 
         setupFab();
 
+        presenter.undoStack.setWatcher(this);
     }
 
     @Override
@@ -137,6 +144,33 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     protected void onPause() {
         super.onPause();
         closeDlg();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.manu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        undoItem = menu.findItem(R.id.menu_undo);
+        redoItem = menu.findItem(R.id.menu_redo);
+        indexChanged(presenter.undoStack.getIdx());
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.menu_undo:
+                presenter.undoStack.undo();
+                break;
+            case R.id.menu_redo:
+                presenter.undoStack.undo();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     protected void onListItemClicked(RecyclerView recyclerView, int position, View v) {
@@ -228,6 +262,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
                         @Override
                         public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                             presenter.closeDlg();
+                            try {
+                                presenter.undoStack.push(new RemoveItemUndo(presenter.undoStack, "remove", notes));
+                            } catch (Exception e) {
+                                System.err.println(e.getLocalizedMessage());
+                            }
+//                            presenter.del(notes);
                         }
                     })
                     .onNegative((dialog, which) -> presenter.closeDlg())
@@ -307,6 +347,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Toast.makeText(this, "MainActivity.requestCode: " + requestCode, Toast.LENGTH_SHORT).show();
         presenter.updateView();
+    }
+
+    @Override
+    public void indexChanged(int idx) {
+        Log.d(TAG, "indexChanged");
+        if(undoItem != null) {
+            undoItem.setEnabled(presenter.undoStack.canUndo());
+        }
+        if(redoItem != null) {
+            redoItem.setEnabled(presenter.undoStack.canRedo());
+        }
     }
 
     /**

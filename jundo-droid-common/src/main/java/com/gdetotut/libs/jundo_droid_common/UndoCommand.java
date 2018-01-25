@@ -1,5 +1,7 @@
 package com.gdetotut.libs.jundo_droid_common;
 
+import android.util.Log;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,9 +117,11 @@ public class UndoCommand implements Serializable {
     public final void redo() {
         if (null != children && children.size() > 0) {
             for (UndoCommand cmd : children) {
+                Log.d("MainActivity", "UndoCommand.redo: " + children);
                 cmd.redo();
             }
         } else {
+            Log.d("MainActivity", "UndoCommand.redo: else");
             doRedo();
         }
     }
@@ -169,4 +173,10 @@ public class UndoCommand implements Serializable {
     protected void doUndo() {
     }
 
+    @Override
+    public String toString() {
+        return "UndoCommand{" +
+                "caption='" + caption + '\'' +
+                '}';
+    }
 }

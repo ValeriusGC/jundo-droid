@@ -1,5 +1,7 @@
 package com.gdetotut.libs.jundo_droid_common;
 
+import android.util.Log;
+
 import java.io.*;
 import java.util.*;
 
@@ -145,12 +147,17 @@ public class UndoStack implements Serializable {
      */
     public void push(UndoCommand cmd) throws Exception {
 
+        Log.d("MainActivity", "UndoStack.push: " + cmd + ", suspend = " + suspend);
+
         if (cmd == null) {
             throw new NullPointerException("cmd");
         } else if (!suspend) {
 
+            Log.d("MainActivity", "UndoStack.clone: ");
+
             UndoCommand copy = clone(cmd);
 
+            Log.d("MainActivity", "UndoStack.redo: ");
             cmd.redo();
 
             boolean onMacro = null != macroCmd;
@@ -174,8 +181,10 @@ public class UndoStack implements Serializable {
                     && cur.id() == cmd.id()
                     && onMacro || idx != cleanIdx;
 
+            System.out.println("MainActivity: UndoStack: WOW " + idx);
             if (canMerge && cur != null && cur.mergeWith(cmd)) {
                 if (!onMacro && null != watcher) {
+                    System.out.println("MainActivity: indexChanged: " + idx);
                     watcher.indexChanged(idx);
                     watcher.canUndoChanged(canUndo());
                     watcher.undoTextChanged(undoCaption());
@@ -617,6 +626,8 @@ public class UndoStack implements Serializable {
      */
     public UndoCommand clone(UndoCommand cmd) throws Exception {
 
+        Log.d("MainActivity", "UndoStack.clone()");
+
         if (null == cmd) {
             throw new NullPointerException("cmd");
         }
@@ -626,8 +637,12 @@ public class UndoStack implements Serializable {
             oos.writeObject(cmd);
         }
 
+        Log.d("MainActivity", "UndoStack.after write");
+
         try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
+            Log.d("MainActivity", "UndoStack.ois.readObject()");
             UndoCommand cmdClone = (UndoCommand) ois.readObject();
+            Log.d("MainActivity", "UndoStack.ois.cmdClone: " + cmdClone);
             cmdClone.owner = cmd.owner;
             if (null != cmdClone.children) {
                 for (UndoCommand uc : cmdClone.children) {

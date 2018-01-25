@@ -60,4 +60,18 @@ public interface UndoWatcher {
     default void macroChanged(boolean on) {
     }
 
+    // TODO: 25.01.18 НОвые штуки для Android
+
+    default void onAddCmd(UndoCommand cmd) {
+
+    }
+
+    default void onRemoveCmd(UndoCommand cmd) {
+
+    }
+
+    default void onUndoError(String msg) {
+
+    }
+
 }

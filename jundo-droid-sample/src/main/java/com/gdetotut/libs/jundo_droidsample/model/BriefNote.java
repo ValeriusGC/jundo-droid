@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droidsample.model;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -7,7 +8,7 @@ import java.util.Locale;
 /**
  * Represents brief view of Note
  */
-public class BriefNote {
+public class BriefNote implements Serializable {
 
     private final TypeOf.Oid oid;
     private Long mTime;
