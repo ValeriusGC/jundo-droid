@@ -9,13 +9,18 @@ import java.util.Locale;
  */
 public class BriefNote {
 
+    private final TypeOf.Oid oid;
     private Long mTime;
-
     private String mTitle;
 
-    public BriefNote(Long mTime, String mTitle) {
+    public BriefNote(TypeOf.Oid oid, Long mTime, String mTitle) {
+        this.oid = oid;
         this.mTime = mTime;
         this.mTitle = mTitle;
+    }
+
+    public TypeOf.Oid getOid() {
+        return oid;
     }
 
     public Long getTime() {
@@ -28,10 +33,10 @@ public class BriefNote {
 
     @Override
     public String toString() {
-        SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String strDate = sdfDate.format(new Date(getTime()));
+//        SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+//        String strDate = sdfDate.format(new Date(getTime()));
         return "BriefNote{" +
-                "mTime=" + strDate +
+                "oid=" + oid +
                 ", mTitle='" + mTitle + '\'' +
                 '}';
     }

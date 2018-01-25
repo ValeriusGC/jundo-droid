@@ -33,7 +33,7 @@ public class MainActivityAdapter extends SectioningAdapter {
         public String toString() {
             return "Section{" +
                     date +
-                    ", notes=" + notes.size() +
+                    ", items=" + notes.size() +
                     '}';
         }
     }

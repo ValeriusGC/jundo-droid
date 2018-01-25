@@ -2,6 +2,7 @@ package com.gdetotut.libs.jundo_droidsample.di;
 
 import android.content.Context;
 
+import com.gdetotut.libs.jundo_droidsample.model.BriefNoteManager;
 import com.gdetotut.libs.jundo_droidsample.mvp.presenters.EditModePresenter;
 import com.gdetotut.libs.jundo_droidsample.mvp.presenters.MainPresenter;
 
@@ -16,4 +17,5 @@ public interface AppComponent {
 
     void inject(MainPresenter presenter);
     void inject(EditModePresenter presenter);
+    void inject(BriefNoteManager manager);
 }

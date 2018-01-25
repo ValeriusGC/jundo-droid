@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.gdetotut.libs.jundo_droidsample.R;
 import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
+import com.gdetotut.libs.jundo_droidsample.model.TypeOf;
 
 import org.zakariya.stickyheaders.SectioningAdapter;
 
@@ -15,13 +16,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import static com.gdetotut.libs.jundo_droidsample.ui.adapters.SectionedAdapter.SubjInfo.IS_ITEM;
-import static com.gdetotut.libs.jundo_droidsample.ui.adapters.SectionedAdapter.SubjInfo.IS_SECTION;
+import java.util.TreeMap;
 
 /**
  * Created by valerius on 30.06.17.
@@ -29,20 +27,6 @@ import static com.gdetotut.libs.jundo_droidsample.ui.adapters.SectionedAdapter.S
  * @author valerius
  */
 public class SectionedAdapter extends SectioningAdapter {
-
-    /**
-     * Part of more base class BriefNote
-     */
-    private class Item {
-        final String title;
-        public Item(String title) {
-            this.title = title;
-        }
-    }
-
-    private static class Section {
-        ArrayList<BriefNote> notes = new ArrayList<>();
-    }
 
     public class ItemViewHolder extends SectioningAdapter.ItemViewHolder {
         TextView personNameTextView;
@@ -58,18 +42,41 @@ public class SectionedAdapter extends SectioningAdapter {
 
         public HeaderViewHolder(View itemView) {
             super(itemView);
-            titleTextView = (TextView) itemView.findViewById(R.id.titleTextView);
+            titleTextView = itemView.findViewById(R.id.titleTextView);
         }
+    }
+
+    /**
+     * Part of more base class BriefNote
+     */
+    private static class Item {
+        final TypeOf.Oid oid;
+        final String title;
+
+        public Item(TypeOf.Oid oid, String title) {
+            this.oid = oid;
+            this.title = title;
+        }
+
+        @Override
+        public String toString() {
+            return "Item{" +
+                    "title='" + title + '\'' +
+                    '}';
+        }
+    }
+
+    /**
+     * Section of items
+     */
+    private static class Section {
+        final ArrayList<Item> items = new ArrayList<>();
     }
 
     /**
      * Inner information
      */
-    class SubjInfo {
-        static final boolean IS_SECTION = true;
-        static final boolean IS_ITEM = true;
-        final boolean isSection;
-        final Object subj;
+    class ItemInfo {
         final int sectionIdx;
         final int itemIdx;
         /**
@@ -78,17 +85,17 @@ public class SectionedAdapter extends SectioningAdapter {
          */
         int pos = -1;
 
-        public SubjInfo(boolean isSection, Object subj, int sectionIdx, int itemIdx) {
-            this.isSection = isSection;
-            this.subj = subj;
+        public ItemInfo(int sectionIdx, int itemIdx) {
             this.sectionIdx = sectionIdx;
             this.itemIdx = itemIdx;
         }
     }
 
-    List<Section> sections = new ArrayList<>();
-    List<String> captions = new ArrayList<>();
-    Map<Object, SubjInfo> cursors = new HashMap<>();
+    final List<String> caps = new ArrayList<>();
+    final List<Section> secs = new ArrayList<>();
+    final Map<String, ItemInfo> oid2info = new TreeMap<>();
+//    List<String> captions = new ArrayList<>();
+//    Map<Object, ItemInfo> cursors = new HashMap<>();
 
     // Сущность должна соответствовать задачам адаптера:
     // <Object, Entity>, где
@@ -110,8 +117,9 @@ public class SectionedAdapter extends SectioningAdapter {
     }
 
     public void setNotes(List<BriefNote> notes) {
-        sections.clear();
-        cursors.clear();
+        caps.clear();
+        secs.clear();
+        oid2info.clear();
 
         // Задача - раскидать заметки по секциям
         //  -------------------------------------
@@ -122,21 +130,21 @@ public class SectionedAdapter extends SectioningAdapter {
         if(notes.size() > 0){
             for (int i=0; i< notes.size(); ++i) {
                 BriefNote note = notes.get(i);
+                Item item = new Item(note.getOid(), note.getTitle());
                 Date date = new Date(note.getTime());
                 SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 String cap = sdfDate.format(date);
-                int idx = captions.indexOf(cap);
-                Section sec = null;
-                if(idx < 0){
-                    captions.add(cap);
+                int capIdx = caps.indexOf(cap);
+                Section sec;
+                if(capIdx < 0){
                     sec = new Section();
-                    sections.add(sec);
-                    cursors.put(sec, new SubjInfo(IS_SECTION, sec, sections.size() - 1, -1));
+                    caps.add(cap);
+                    secs.add(sec);
                 }else {
-                    sec = sections.get(idx);
+                    sec = secs.get(capIdx);
                 }
-                sec.notes.add(note);
-                cursors.put(sec, new SubjInfo(IS_ITEM, note, sections.size() - 1, sec.notes.size() - 1));
+                sec.items.add(item);
+                oid2info.put(note.getTitle(), new ItemInfo(secs.size() - 1, sec.items.size() - 1));
             }
         }
         notifyAllSectionsDataSetChanged();
@@ -144,12 +152,12 @@ public class SectionedAdapter extends SectioningAdapter {
 
     @Override
     public int getNumberOfSections() {
-        return sections.size();
+        return secs.size();
     }
 
     @Override
     public int getNumberOfItemsInSection(int sectionIndex) {
-        return sections.get(sectionIndex).notes.size();
+        return secs.get(sectionIndex).items.size();
     }
 
     @Override
@@ -178,25 +186,34 @@ public class SectionedAdapter extends SectioningAdapter {
 
     @Override
     public void onBindItemViewHolder(SectioningAdapter.ItemViewHolder viewHolder, int sectionIndex, int itemIndex, int itemType) {
-        Section s = sections.get(sectionIndex);
+        Section s = secs.get(sectionIndex);
         ItemViewHolder ivh = (ItemViewHolder) viewHolder;
-        BriefNote person = s.notes.get(itemIndex);
-        ((ItemViewHolder) viewHolder).itemView.setTag(person);
-        ivh.personNameTextView.setText(person.getTitle());
+        Item item = s.items.get(itemIndex);
+        ((ItemViewHolder) viewHolder).itemView.setTag(item);
+        ivh.personNameTextView.setText(item.title);
         System.out.println("I.getAdapterPosition():" + viewHolder.getAdapterPosition());
-
     }
 
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindHeaderViewHolder(SectioningAdapter.HeaderViewHolder viewHolder, int sectionIndex, int headerType) {
-        Section s = sections.get(sectionIndex);
+        Section s = secs.get(sectionIndex);
         HeaderViewHolder hvh = (HeaderViewHolder) viewHolder;
         ((HeaderViewHolder) viewHolder).itemView.setTag(s);
-        hvh.titleTextView.setText(captions.get(sectionIndex));
+        hvh.titleTextView.setText(caps.get(sectionIndex));
         System.out.println("S.getAdapterPosition():" + viewHolder.getAdapterPosition());
     }
 
-
+    public List<TypeOf.Oid> getOids(Object obj) {
+        final List<TypeOf.Oid> oids = new ArrayList<>();
+        if(obj instanceof Item) {
+            oids.add((((Item) obj).oid));
+        }else if(obj instanceof Section) {
+            for (Item it : ((Section) obj).items) {
+                oids.add(it.oid);
+            }
+        }
+        return oids;
+    }
 
 }

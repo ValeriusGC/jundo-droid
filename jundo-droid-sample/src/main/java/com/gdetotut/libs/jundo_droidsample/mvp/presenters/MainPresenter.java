@@ -11,14 +11,21 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.gdetotut.libs.jundo_droidsample.App;
 import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
+import com.gdetotut.libs.jundo_droidsample.model.BriefNoteManager;
 import com.gdetotut.libs.jundo_droidsample.model.NoteLoader;
+import com.gdetotut.libs.jundo_droidsample.model.TypeOf;
 import com.gdetotut.libs.jundo_droidsample.mvp.views.MainView;
 import com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.inject.Inject;
 
@@ -36,16 +43,18 @@ public class MainPresenter extends MvpPresenter<MainView> {
     NoteLoader mNoteLoader;
 
     @Inject
+    BriefNoteManager manager;
+
+    @Inject
     Context ctx;
 
     private boolean mIsInLoading;
-    private List<BriefNote> mTestNotes = new ArrayList<>();
+    private List<BriefNote> notes = new ArrayList<>();
+
+//    private Map<String, BriefNote> mTestNotes = new TreeMap<>();
     private boolean mLoading;
 
     private CompositeDisposable disposable = new CompositeDisposable();
-
-    private static String NAME = "NAME";
-    private static String LIST = "list";
 
     public MainPresenter() {
         App.getAppComponent().inject(this);
@@ -54,18 +63,16 @@ public class MainPresenter extends MvpPresenter<MainView> {
     @Override
     protected void onFirstViewAttach() {
         super.onFirstViewAttach();
+        manager.load();
         show();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy");
+//        Log.d(TAG, "onDestroy");
 
-        String json = new Gson().toJson(mTestNotes);
-        SharedPreferences.Editor ed = ctx.getSharedPreferences(NAME, Context.MODE_PRIVATE).edit();
-        ed.putString(LIST, json).apply();
-
+        manager.save();
         disposable.clear();
     }
 
@@ -122,7 +129,9 @@ public class MainPresenter extends MvpPresenter<MainView> {
     }
 
     private void onLoadingFinish() {
-        getViewState().loadData(mTestNotes);
+        List<BriefNote> notes = manager.getAll();
+        Collections.sort(notes, (n1, n2) -> n1.getTime().compareTo(n2.getTime()));
+        getViewState().loadData(notes);
     }
 
     private void onLoadingSuccess() {
@@ -130,37 +139,15 @@ public class MainPresenter extends MvpPresenter<MainView> {
     }
 
     public List<BriefNote> load() {
-
         Log.d(TAG, "load()");
 
-        if(!mTestNotes.isEmpty()) {
-            return mTestNotes;
+        if(!notes.isEmpty() || mLoading) {
+            return notes;
         }
 
-        if(mLoading) {
-            return mTestNotes;
-        }
-
-        SharedPreferences sp = ctx.getSharedPreferences(NAME, Context.MODE_PRIVATE);
-        String json = sp.getString(LIST, null);
-        if(null != json) {
-            Log.d(TAG, "load: " + json);
-            mTestNotes = new Gson().fromJson(json, new TypeToken<List<BriefNote>>(){}.getType());
-            return mTestNotes;
-        }
-
-
-        mLoading = true;
-        final int count = 36;
-        final int twoHours = 1000 * 60 * 60 * 2; // 2 hours
-        final int twentyFourHours = twoHours * 12; // 24 hours
-        final long startTime = System.currentTimeMillis() - twentyFourHours*3;
-        for(int i=0; i<count; ++i) {
-            final long time = startTime + twoHours * i;
-            final BriefNote briefNote = new BriefNote(time, "note: " + i);
-            mTestNotes.add(briefNote);
-        }
-        return mTestNotes;
+        notes = manager.getAll();
+        Collections.sort(notes, (n1, n2) -> n1.getTime().compareTo(n2.getTime()));
+        return notes;
     }
 
     /**
@@ -178,11 +165,18 @@ public class MainPresenter extends MvpPresenter<MainView> {
         getViewState().updateView();
     }
 
-    public void showDelDlg(Object o) {
-        getViewState().showDelDlg(o);
+    public void showDelDlg(List<TypeOf.Oid> oids) {
+        List<BriefNote> notes = getByIod(oids);
+        getViewState().showDelDlg(notes);
     }
 
     public void closeDlg() {
         getViewState().closeDlg();
+    }
+
+    private List<BriefNote> getByIod(List<TypeOf.Oid> oids) {
+        List<BriefNote> notes = manager.getBy(oids);
+        Collections.sort(notes, (n1, n2) -> n1.getTime().compareTo(n2.getTime()));
+        return notes;
     }
 }

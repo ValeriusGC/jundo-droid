@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droidsample.di;
 
+import com.gdetotut.libs.jundo_droidsample.model.BriefNoteManager;
 import com.gdetotut.libs.jundo_droidsample.model.NoteLoader;
 
 import javax.inject.Singleton;
@@ -14,7 +15,13 @@ import dagger.Provides;
  */
 @Module
 public class ApiModule {
+
     @Provides
     @Singleton
     public NoteLoader getNoteLoader() { return new NoteLoader();}
+
+    @Provides
+    @Singleton
+    public BriefNoteManager getManager() {return new BriefNoteManager();}
+
 }

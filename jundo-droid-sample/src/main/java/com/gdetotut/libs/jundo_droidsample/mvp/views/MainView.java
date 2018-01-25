@@ -7,6 +7,7 @@ import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy;
 import com.arellomobile.mvp.viewstate.strategy.OneExecutionStateStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
+import com.gdetotut.libs.jundo_droidsample.model.TypeOf;
 import com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public interface MainView extends MvpView {
 
     void updateView();
 
-    void showDelDlg(Object itemIndex);
+    void showDelDlg(List<BriefNote> notes);
 
     void closeDlg();
 }

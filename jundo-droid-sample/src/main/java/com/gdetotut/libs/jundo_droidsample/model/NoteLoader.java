@@ -25,59 +25,59 @@ public class NoteLoader {
         void onRandomUserLoadFailure(Throwable t);
     }
 
-    public List<BriefNote> load() {
-
-        Log.d(TAG, "load()");
-
-        if(!mTestNotes.isEmpty()) {
-            return mTestNotes;
-        }
-
-        if(mLoading) {
-            return mTestNotes;
-        }
-
-        mLoading = true;
-        final int count = 36;
-        final int twoHours = 1000 * 60 * 60 * 2; // 2 hours
-        final int twentyFourHours = twoHours * 12; // 24 hours
-        final long startTime = System.currentTimeMillis() - twentyFourHours * 3;
-        for(int i=0; i<count; ++i) {
-            final long time = startTime + twoHours * i;
-            final BriefNote briefNote = new BriefNote(time, "note: " + i);
-            mTestNotes.add(briefNote);
-        }
-        return mTestNotes;
-    }
-
-    public void load(final OnLoadCallback onLoadCallback) {
-
-        Log.d(TAG, "OnLoadCallback load()");
-
-        if(!mTestNotes.isEmpty()) {
-            onLoadCallback.onRandomUsersDidLoad(mTestNotes);
-            return;
-        }
-
-        mOnLoadCallbacks.add(onLoadCallback);
-        if(mLoading) {
-            return;
-        }
-
-        mLoading = true;
-        final int count = 36;
-        final int twoHours = 1000 * 60 * 60 * 2; // 2 hours
-        final int twentyFourHours = twoHours * 12; // 24 hours
-        final long startTime = System.currentTimeMillis() - twentyFourHours * 3;
-        for(int i=0; i<count; ++i) {
-            final long time = startTime + twoHours * i;
-            final BriefNote briefNote = new BriefNote(time, "note: " + i);
-            mTestNotes.add(briefNote);
-        }
-        for (OnLoadCallback c : mOnLoadCallbacks) {
-            c.onRandomUsersDidLoad(mTestNotes);
-        }
-
-    }
+//    public List<BriefNote> load() {
+//
+//        Log.d(TAG, "load()");
+//
+//        if(!mTestNotes.isEmpty()) {
+//            return mTestNotes;
+//        }
+//
+//        if(mLoading) {
+//            return mTestNotes;
+//        }
+//
+//        mLoading = true;
+//        final int count = 36;
+//        final int twoHours = 1000 * 60 * 60 * 2; // 2 hours
+//        final int twentyFourHours = twoHours * 12; // 24 hours
+//        final long startTime = System.currentTimeMillis() - twentyFourHours * 3;
+//        for(int i=0; i<count; ++i) {
+//            final long time = startTime + twoHours * i;
+//            final BriefNote briefNote = new BriefNote("oid:" + count, time, "note: " + i);
+//            mTestNotes.add(briefNote);
+//        }
+//        return mTestNotes;
+//    }
+//
+//    public void load(final OnLoadCallback onLoadCallback) {
+//
+//        Log.d(TAG, "OnLoadCallback load()");
+//
+//        if(!mTestNotes.isEmpty()) {
+//            onLoadCallback.onRandomUsersDidLoad(mTestNotes);
+//            return;
+//        }
+//
+//        mOnLoadCallbacks.add(onLoadCallback);
+//        if(mLoading) {
+//            return;
+//        }
+//
+//        mLoading = true;
+//        final int count = 36;
+//        final int twoHours = 1000 * 60 * 60 * 2; // 2 hours
+//        final int twentyFourHours = twoHours * 12; // 24 hours
+//        final long startTime = System.currentTimeMillis() - twentyFourHours * 3;
+//        for(int i=0; i<count; ++i) {
+//            final long time = startTime + twoHours * i;
+//            final BriefNote briefNote = new BriefNote("oid:" + count, time, "note: " + i);
+//            mTestNotes.add(briefNote);
+//        }
+//        for (OnLoadCallback c : mOnLoadCallbacks) {
+//            c.onRandomUsersDidLoad(mTestNotes);
+//        }
+//
+//    }
 
 }

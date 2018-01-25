@@ -25,6 +25,7 @@ import com.gdetotut.libs.jundo_droidsample.R;
 import com.gdetotut.libs.jundo_droidsample.commons.Fab;
 import com.gdetotut.libs.jundo_droidsample.commons.ItemClickSupport;
 import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
+import com.gdetotut.libs.jundo_droidsample.model.TypeOf;
 import com.gdetotut.libs.jundo_droidsample.mvp.presenters.MainPresenter;
 import com.gdetotut.libs.jundo_droidsample.mvp.views.MainView;
 import com.gdetotut.libs.jundo_droidsample.ui.adapters.MainActivityAdapter;
@@ -132,6 +133,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        closeDlg();
+    }
 
     protected void onListItemClicked(RecyclerView recyclerView, int position, View v) {
         //Log.d(TAG, adapter.getNotes().get(position).getTitle());
@@ -158,8 +164,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         int sectionIndex = adapter.getSectionForAdapterPosition(adapterPosition);
         int itemIndex = adapter.getPositionOfItemInSection(sectionIndex, adapterPosition);
         Object o = v.getTag();
+        List<TypeOf.Oid> oids = adapter.getOids(o);
 
-        presenter.showDelDlg(o);
+        presenter.showDelDlg(oids);
 
         // Why false...?
         return false;
@@ -202,28 +209,47 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     }
 
     @Override
-    public void showDelDlg(Object o) {
-        delDlg = new MaterialDialog.Builder(this)
-                .content(String.format("Delete %s?", o))
-                .positiveText("Да")
-                .negativeText("Нет")
-                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+    public void showDelDlg(List<BriefNote> notes) {
+        System.out.println(TAG + ":showDelDlg");
+
+        if(notes.size() > 0) {
+            String info = "Delete %s";
+            if(notes.size() == 1) {
+                info = String.format(info, notes.get(0).getTitle() + "?");
+            }else {
+                info = String.format(info, notes.size() + " recs?");
+            }
+
+            delDlg = new MaterialDialog.Builder(this)
+                    .content(info)
+                    .positiveText("Да")
+                    .negativeText("Нет")
+                    .onPositive(new MaterialDialog.SingleButtonCallback() {
+                        @Override
+                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                            presenter.closeDlg();
+                        }
+                    })
+                    .onNegative((dialog, which) -> presenter.closeDlg())
+                    .dismissListener(dialogInterface -> {
+                        System.out.println(TAG + ": dismissListener");
                         presenter.closeDlg();
+                    })
+                    .cancelListener(dialogInterface -> {
+                        System.out.println(TAG + ": cancelListener");
                         presenter.closeDlg();
-                    }
-                })
-                .onNegative((dialog, which) -> presenter.closeDlg())
-                .dismissListener(dialogInterface -> presenter.closeDlg())
-                .show();
+                    })
+                    .show();
+        }
     }
 
     @Override
     public void closeDlg() {
+        System.out.println(TAG + ": closeDlg()");
         if(delDlg != null) {
             delDlg.setOnDismissListener(null);
-            delDlg.cancel();
+            delDlg.setOnCancelListener(null);
+            delDlg.dismiss();
         }
     }
 
