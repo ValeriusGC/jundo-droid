@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
+import com.gdetotut.libs.jundo_droid_common.UndoPacket;
 import com.gdetotut.libs.jundo_droid_common.UndoStack;
 import com.gdetotut.libs.jundo_droidsample.App;
 import com.gdetotut.libs.jundo_droidsample.model.BriefNote;
@@ -29,6 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 
 import javax.inject.Inject;
 
@@ -41,6 +43,7 @@ import io.reactivex.schedulers.Schedulers;
 public class MainPresenter extends MvpPresenter<MainView> {
 
     static final String TAG = "MainPresenter";
+    static final String UNDO_KEY = "undo";
 
     @Inject
     NoteLoader mNoteLoader;
@@ -54,7 +57,7 @@ public class MainPresenter extends MvpPresenter<MainView> {
     /**
      * This is a delicate moment. Storing DB state can be impossible...
      */
-    public final UndoStack undoStack = new UndoStack("", null);
+    public UndoStack undoStack;// = new UndoStack("", null);
 
     private boolean mIsInLoading;
     private List<BriefNote> notes = new ArrayList<>();
@@ -66,6 +69,19 @@ public class MainPresenter extends MvpPresenter<MainView> {
 
     public MainPresenter() {
         App.getAppComponent().inject(this);
+
+        SharedPreferences sp = ctx.getSharedPreferences(TAG, Context.MODE_PRIVATE);
+        String s = sp.getString(UNDO_KEY, null);
+        try {
+            undoStack = UndoPacket
+                    .peek(s, subjInfo -> subjInfo.id.equals(TAG))
+                    .restore(null)
+                    .stack(null);
+        } catch (Exception e) {
+            System.err.println(e.getLocalizedMessage());
+            undoStack = new UndoStack("", null);
+        }
+
         undoStack.getLocalContexts().put(MainUndoCtrl.LC_PRES, this);
     }
 
@@ -80,6 +96,17 @@ public class MainPresenter extends MvpPresenter<MainView> {
     public void onDestroy() {
         super.onDestroy();
 //        Log.d(TAG, "onDestroy");
+
+        try {
+            String stack = UndoPacket.make(undoStack, TAG, 1)
+                    .zipped(true)
+                    .store();
+            SharedPreferences.Editor ed = ctx.getSharedPreferences(TAG, Context.MODE_PRIVATE).edit();
+            ed.putString(UNDO_KEY, stack).apply();
+
+        } catch (Exception e) {
+            System.err.println(e.getLocalizedMessage());
+        }
 
         manager.save();
         disposable.clear();
@@ -205,15 +232,6 @@ public class MainPresenter extends MvpPresenter<MainView> {
 
     public void add(List<BriefNote> notes) {
         manager.add(notes);
-        loadData();
-    }
-
-    public void addByOids(List<TypeOf.Oid> oids) {
-        for (TypeOf.Oid s : oids) {
-            BriefNote note = new BriefNote(s.getOid(), n.getTime(), n.getTitle());
-        }
-
-        manager.add(getByIod(oids));
         loadData();
     }
 

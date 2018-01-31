@@ -2,10 +2,12 @@ package com.gdetotut.libs.jundo_droid_common;
 
 import java.io.*;
 import java.util.Arrays;
-import java.util.Base64;
+
+import com.android.internal.util.Predicate;
+import com.gdetotut.libs.jundo_droid_common.util.Base64;
+
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Predicate;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -211,7 +213,7 @@ public class UndoPacket {
                 }
                 baos = zippedBaos;
             }
-            return Base64.getUrlEncoder().encodeToString(baos.toByteArray());
+            return Base64.encodeToString(baos.toByteArray(), Base64.URL_SAFE);
         }
 
     }
@@ -285,7 +287,7 @@ public class UndoPacket {
             long len = Long.valueOf(lenPart);
             String dataCandidate = candidate.substring((int) (Builder.HEADER_SIZE + len));
 
-            final byte[] arr = Base64.getUrlDecoder().decode(dataCandidate);
+            final byte[] arr = Base64.decode(dataCandidate, Base64.URL_SAFE);
             final boolean zipped = (arr[0] == (byte) (GZIPInputStream.GZIP_MAGIC))
                     && (arr[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8));
 
@@ -340,7 +342,7 @@ public class UndoPacket {
         String subjInfoCandidate = candidate.substring(Builder.HEADER_SIZE, (int) (Builder.HEADER_SIZE + len));
         SubjInfo obj = (SubjInfo) fromBase64(subjInfoCandidate);
 
-        Peeker peeker = new Peeker(candidate, obj, null == p || p.test(obj));
+        Peeker peeker = new Peeker(candidate, obj, null == p || p.apply(obj));
         return peeker;
     }
 
@@ -361,7 +363,7 @@ public class UndoPacket {
             throw new NullPointerException("candidate");
         }
 
-        final byte[] data = Base64.getUrlDecoder().decode(candidate);
+        final byte[] data = Base64.decode(candidate, Base64.URL_SAFE);
         final boolean zipped = (data[0] == (byte) (GZIPInputStream.GZIP_MAGIC))
                 && (data[1] == (byte) (GZIPInputStream.GZIP_MAGIC >> 8));
 

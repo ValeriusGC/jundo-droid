@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droidsample.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import static java.util.UUID.randomUUID;
@@ -8,14 +9,14 @@ import static java.util.UUID.randomUUID;
  * Created by valerius on 25.01.18.
  */
 
-public class TypeOf<V> {
+public class TypeOf<V> implements Serializable {
     final V value;
 
     public TypeOf(V value) {
         this.value = value;
     }
 
-    public static class Oid {
+    public static class Oid implements Serializable {
         private final TypeOf<String> type;
         public Oid(String value) {
             this.type = new TypeOf<>(value);

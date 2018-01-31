@@ -38,6 +38,7 @@ import com.gordonwong.materialsheetfab.MaterialSheetFabEventListener;
 import org.zakariya.stickyheaders.StickyHeaderLayoutManager;
 
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -78,6 +79,9 @@ public class MainActivity extends MvpAppCompatActivity
 
     MenuItem undoItem = null;
     MenuItem redoItem = null;
+    MenuItem beginMacroItem = null;
+    MenuItem endMacroItem = null;
+    MenuItem dropMacroItem = null;
 
     // Common class for FAB
     private MaterialSheetFab mFab;
@@ -156,6 +160,9 @@ public class MainActivity extends MvpAppCompatActivity
     public boolean onPrepareOptionsMenu(Menu menu) {
         undoItem = menu.findItem(R.id.menu_undo);
         redoItem = menu.findItem(R.id.menu_redo);
+        beginMacroItem = menu.findItem(R.id.menu_start_macro);
+        endMacroItem = menu.findItem(R.id.menu_stop_macro);
+        dropMacroItem = menu.findItem(R.id.menu_drop_macro);
         indexChanged(presenter.undoStack.getIdx());
         return super.onPrepareOptionsMenu(menu);
     }
@@ -167,7 +174,17 @@ public class MainActivity extends MvpAppCompatActivity
                 presenter.undoStack.undo();
                 break;
             case R.id.menu_redo:
-                presenter.undoStack.undo();
+                presenter.undoStack.redo();
+                break;
+            case R.id.menu_start_macro:
+                presenter.undoStack.beginMacro(String.format(Locale.getDefault(),"macro #%d",
+                        presenter.undoStack.macroCount()));
+                break;
+            case R.id.menu_stop_macro:
+                presenter.undoStack.endMacro();
+                break;
+            case R.id.menu_drop_macro:
+                presenter.undoStack.dropMacro();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -358,6 +375,13 @@ public class MainActivity extends MvpAppCompatActivity
         if(redoItem != null) {
             redoItem.setEnabled(presenter.undoStack.canRedo());
         }
+    }
+
+    @Override
+    public void macroChanged(boolean on) {
+        beginMacroItem.setEnabled(!on);
+        endMacroItem.setEnabled(on);
+        dropMacroItem.setEnabled(!on);
     }
 
     /**

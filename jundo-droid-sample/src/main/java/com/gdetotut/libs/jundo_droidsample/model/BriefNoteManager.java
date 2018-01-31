@@ -22,8 +22,8 @@ import javax.inject.Inject;
 
 public class BriefNoteManager {
 
-    private static String NAME = "NAME";
-    private static String LIST = "list";
+    private static String NAME = "BriefNoteManager";
+    private static String LIST = "notes_as_json";
 
     @Inject
     Context ctx;

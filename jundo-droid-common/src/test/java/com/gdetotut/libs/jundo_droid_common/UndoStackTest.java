@@ -891,7 +891,7 @@ public class UndoStackTest implements Serializable {
         stack.push(new TextSampleCommands.AddLine(stack, "new line", null));
         testText.addLine();
         assertEquals(subj, testText);
-        UndoCommand macro = stack.clone(stack.getMacros().get(0));
+        UndoCommand macro = stack.clone(stack.getMacro(0));
         stack.push(macro);
         testText.add(s2);
         assertEquals(subj, testText);
@@ -919,7 +919,8 @@ public class UndoStackTest implements Serializable {
         TextSample subj1 = new TextSample();
 
         UndoStack stack1 = UndoPacket
-                .peek(pack, null)
+                .peek(pack, subjInfo -> subjInfo.id.equals(SUBJ_ID))
+//                .peek(pack, null)
                 .restore((processedSubj, subjInfo) -> {
                     // Always return null for unexpected result.
                     return SUBJ_ID.equals(subjInfo.id) ? (ArrayList<String>) processedSubj : null;
@@ -957,7 +958,7 @@ public class UndoStackTest implements Serializable {
         stack1.push(new TextSampleCommands.AddLine(stack1, "new line", null));
         testText.addLine();
         assertEquals(subj1, testText);
-        UndoCommand macro1 = stack1.clone(stack1.getMacros().get(0));
+        UndoCommand macro1 = stack1.clone(stack1.getMacro(0));
         stack1.push(macro1);
         testText.add(s2);
         assertEquals(subj1, testText);
@@ -982,10 +983,10 @@ public class UndoStackTest implements Serializable {
         final Point pt = new Point(1, 1);
         UndoStack stack = new UndoStack(pt, null);
         stack.setWatcher(new SimpleUndoWatcher());
-        assertEquals(null, stack.getMacros());
+        assertEquals(null, stack.getMacro(0));
         stack.beginMacro("macro 1");
         stack.endMacro();
-        assertEquals(1, stack.getMacros().size());
+        assertEquals(1, stack.macroCount());
 
         // for 100% code coverage
         stack.endMacro();

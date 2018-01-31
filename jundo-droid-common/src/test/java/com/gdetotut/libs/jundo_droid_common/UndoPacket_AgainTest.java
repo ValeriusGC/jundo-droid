@@ -1,6 +1,7 @@
 package com.gdetotut.libs.jundo_droid_common;
 
 import android.graphics.Color;
+import android.util.Base64;
 
 import com.gdetotut.libs.jundo_droid_common.UndoPacket.SubjInfo;
 import com.gdetotut.libs.jundo_droid_common.some.Point;
@@ -218,6 +219,9 @@ public class UndoPacket_AgainTest {
      */
     @Test
     public void testWithHandlers1() throws Exception {
+
+//        mockStatic(Base64.class);
+//        when(Base64.encodeToString(new byte[]{}, Base64.URL_SAFE)).thenReturn("aGVsbG8sIHdvcmxkPyE");
 
         {
             Color color = new Color();
