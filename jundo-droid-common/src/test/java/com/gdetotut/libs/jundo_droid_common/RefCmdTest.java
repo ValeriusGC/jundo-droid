@@ -19,29 +19,29 @@ public class RefCmdTest {
     @Before
     public void prepare() {
         subj = new Point(1, 1);
-        stack = new UndoStack(subj, null);
+        stack = new UndoStack(subj);
     }
 
     @Test
     public void testGetterNullEx(){
         thrown.expect(NullPointerException.class);
-        new RefCmd<>(stack, "", null, subj::setX, 1, null);
+        new RefCmd<>( "", null, subj::setX, 1);
         thrown = ExpectedException.none();
     }
 
     @Test
     public void testSetterNullEx(){
         thrown.expect(NullPointerException.class);
-        new RefCmd<>(stack, "", subj::getX, null, 1, null);
+        new RefCmd<>("", subj::getX, null, 1);
         thrown = ExpectedException.none();
     }
 
     @Test
     public void testCompare(){
-        UndoCommand cmd1 = new RefCmd<>(stack, "", subj::getX, subj::setX, 1, null);
+        UndoCommand cmd1 = new RefCmd<>( "", subj::getX, subj::setX, 1);
         UndoCommand cmd2 = cmd1;
         Assert.assertEquals(cmd1, cmd2);
-        UndoCommand cmd3 = new RefCmd<>(stack, "", subj::getX, subj::setX, 1, null);
+        UndoCommand cmd3 = new RefCmd<>("", subj::getX, subj::setX, 1);
         Assert.assertNotEquals(cmd1, cmd3);
     }
 

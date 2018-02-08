@@ -1,7 +1,5 @@
 package com.gdetotut.libs.jundo_droid_common;
 
-import android.util.Log;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,28 +27,32 @@ public class UndoCommand implements Serializable {
     /**
      * This command's owner. Via this reference the command can use local contexts.
      */
-    protected UndoStack owner;
+    private UndoStack owner = null;
 
     /**
      * Constructs an UndoCommand object with the given caption.
      *
-     * @param owner   the stack that owns this command. Required.
+     * Not should be created standalone!
+     *
+     *
      * @param caption a short string describing what this command does. Optional.
-     * @param parent  command's parent. Used in the concept of 'command-chain'.  Optional.
      */
-    public UndoCommand(UndoStack owner, String caption, UndoCommand parent) {
-        if (owner == null) {
-            throw new NullPointerException("owner");
-        } else {
-            this.owner = owner;
-            setCaption(caption);
-            if (null != parent) {
-                if (null == parent.children) {
-                    parent.children = new ArrayList<>();
-                }
-                parent.children.add(this);
-            }
-        }
+    protected UndoCommand(String caption) {
+        setCaption(caption);
+    }
+
+    UndoCommand setOwner(UndoStack owner) {
+//      It is checked for null everywhere when is called.
+//        if (owner == null) {
+//            throw new NullPointerException("owner");
+//        }
+
+        this.owner = owner;
+        return this;
+    }
+
+    public UndoStack getOwner() {
+        return owner;
     }
 
     /**
@@ -111,6 +113,10 @@ public class UndoCommand implements Serializable {
         return children.get(idx);
     }
 
+    /**
+     * Adds cmd as a child in the children list.
+     * @param cmd command to be added. Required.
+     */
     public void addChild(UndoCommand cmd) {
         if (cmd == null) {
             throw new NullPointerException("cmd");

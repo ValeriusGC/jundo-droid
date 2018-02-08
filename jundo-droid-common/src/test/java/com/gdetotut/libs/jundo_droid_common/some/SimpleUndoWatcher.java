@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droid_common.some;
 
+
 import com.gdetotut.libs.jundo_droid_common.UndoWatcher;
 
 /**

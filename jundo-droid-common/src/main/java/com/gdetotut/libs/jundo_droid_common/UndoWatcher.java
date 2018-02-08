@@ -15,7 +15,6 @@ public interface UndoWatcher {
 
     /**
      * This event fires when undo/redo operation cross {@link UndoStack#cleanIdx} point.
-     *
      * @param clean true when we go into clean state; false when out.
      */
     default void cleanChanged(boolean clean) {
@@ -59,20 +58,6 @@ public interface UndoWatcher {
      * @param on true if starts; otherwise false.
      */
     default void macroChanged(boolean on) {
-    }
-
-    // TODO: 25.01.18 НОвые штуки для Android
-
-    default void onAddCmd(UndoCommand cmd) {
-
-    }
-
-    default void onRemoveCmd(UndoCommand cmd) {
-
-    }
-
-    default void onUndoError(String msg) {
-
     }
 
 }

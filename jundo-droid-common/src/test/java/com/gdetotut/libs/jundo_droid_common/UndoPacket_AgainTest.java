@@ -1,7 +1,6 @@
 package com.gdetotut.libs.jundo_droid_common;
 
 import android.graphics.Color;
-import android.util.Base64;
 
 import com.gdetotut.libs.jundo_droid_common.UndoPacket.SubjInfo;
 import com.gdetotut.libs.jundo_droid_common.some.Point;
@@ -11,15 +10,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult.UPR_NewStack;
+import static com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult.UPR_PeekRefused;
+import static com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult.UPR_Success;
+import static com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult.UPR_WrongCandidate;
+import static org.junit.Assert.*;
 
 public class UndoPacket_AgainTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
-
 
     Point subj = null;
     UndoStack stack = null;
@@ -27,7 +27,7 @@ public class UndoPacket_AgainTest {
     @Before
     public void prepare() {
         subj = new Point(1, 1);
-        stack = new UndoStack(subj, null);
+        stack = new UndoStack(subj);
     }
 
     @Test
@@ -59,23 +59,51 @@ public class UndoPacket_AgainTest {
     public void testSubjEx() throws Exception {
         thrown.expect(Exception.class);
         stack.setSubj(new Object());
-        UndoPacket.make(stack, "", 1)
+        UndoPacket
+                .make(stack, "", 1)
                 .store();
         thrown = ExpectedException.none();
     }
 
     @Test
-    public void testCandidateEx() throws Exception {
-        thrown.expect(NullPointerException.class);
-        UndoPacket.peek(null, null);
+    public void testCreateNewEx() throws CreatorException {
+        thrown.expect(CreatorException.class);
+        UndoPacket
+                .peek("", null)
+                .restore(null, () -> null);
         thrown = ExpectedException.none();
     }
 
     @Test
-    public void testCandidateEx2() throws Exception {
-        thrown.expect(Exception.class);
-        UndoPacket.peek("too short", null);
-        thrown = ExpectedException.none();
+    public void testNullCandidate() {
+        UndoPacket.Peeker peeker = UndoPacket.peek(null, null);
+        assertEquals(peeker.result.code, UPR_WrongCandidate);
+        assertEquals(peeker.result.msg, "is null");
+    }
+
+    @Test
+    public void testShortCandidate() {
+        UndoPacket.Peeker peeker = UndoPacket.peek("short", null);
+        assertEquals(peeker.result.code, UPR_WrongCandidate);
+        assertEquals(peeker.result.msg, "too small size");
+    }
+
+    @Test
+    public void testBadSubjInfo() {
+        UndoPacket.Peeker peeker = UndoPacket.peek("0ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", null);
+        assertEquals(peeker.result.code, UPR_WrongCandidate);
+    }
+
+    @Test
+    public void testPeeker() throws Exception {
+        String s = UndoPacket.make(stack, "stack", 1).store();
+        UndoPacket.Peeker peeker = UndoPacket.peek(s, null);
+        assertEquals(peeker.result.code, UPR_Success);
+        assertEquals(peeker.result.msg, null);
+
+        peeker = UndoPacket.peek(s, it -> false);
+        assertEquals(peeker.result.code, UPR_PeekRefused);
+        assertEquals(peeker.result.msg, null);
     }
 
     @Test
@@ -87,7 +115,7 @@ public class UndoPacket_AgainTest {
         thrown.expect(Exception.class);
         // Need subj handler, cause was onStore
         UndoPacket.peek(s, null)
-                .restore(null)
+                .restore(null, null)
                 .stack(null);
         thrown = ExpectedException.none();
     }
@@ -98,10 +126,12 @@ public class UndoPacket_AgainTest {
                 .onStore(subj -> "")
                 .store();
 
-        // for 100% test coverage
-        UndoPacket.peek(s, null)
-                .restore((processedSubj, subjInfo) -> null)
-                .stack(null);
+        UndoPacket packet = UndoPacket
+                .peek(s, null)
+                .restore((processedSubj, subjInfo) -> null, () -> stack);
+
+        assertNull(packet.subjInfo);
+        assertEquals(UPR_NewStack, packet.result.code);
     }
 
 
@@ -117,9 +147,9 @@ public class UndoPacket_AgainTest {
         assertEquals(-30, pt.getX());
         assertEquals(-40, pt.getY());
 
-        UndoStack stack = new UndoStack(pt, null);
-        stack.push(new RefCmd<>(stack, "Change x", pt::getX, pt::setX, 10, null));
-        stack.push(new RefCmd<>(stack, "Change y", pt::getY, pt::setY, 20, null));
+        UndoStack stack = new UndoStack(pt);
+        stack.push(new RefCmd<>("Change x", pt::getX, pt::setX, 10));
+        stack.push(new RefCmd<>("Change y", pt::getY, pt::setY, 20));
 
         // After 2 commands applied
         assertEquals(2, stack.count());
@@ -155,7 +185,7 @@ public class UndoPacket_AgainTest {
         // Распаковка информации и проверка соответствия стека ожидаемому.
         UndoPacket packet = UndoPacket
                 .peek(packAsString, null)
-                .restore(null);
+                .restore(null, null);
 
         SubjInfo subjInfo = packet.subjInfo;
         assertEquals("some.Point", subjInfo.id);
@@ -205,7 +235,7 @@ public class UndoPacket_AgainTest {
     public void testNonSerializableException() throws Exception {
 
         Color color = new Color();
-        UndoStack stack = new UndoStack(color, null);
+        UndoStack stack = new UndoStack(color);
         thrown.expect(Exception.class);
         UndoPacket
                 .make(stack, "", 1)
@@ -215,17 +245,14 @@ public class UndoPacket_AgainTest {
     }
 
     /**
-     * Simplified version for non-serializable with {@link com.gdetotut.libs.jundo_droid_common.UndoPacket.OnRestore}
+     * Simplified version for non-serializable with {@link UndoPacket.OnRestore}
      */
     @Test
     public void testWithHandlers1() throws Exception {
 
-//        mockStatic(Base64.class);
-//        when(Base64.encodeToString(new byte[]{}, Base64.URL_SAFE)).thenReturn("aGVsbG8sIHdvcmxkPyE");
-
         {
             Color color = new Color();
-            UndoStack stack = new UndoStack(color, null);
+            UndoStack stack = new UndoStack(color);
             String str = UndoPacket
                     .make(stack, "", 1)
                     .onStore(subj -> "RED")
@@ -233,21 +260,21 @@ public class UndoPacket_AgainTest {
             // We need handler here 'cause we store with handler
             UndoPacket
                     .peek(str, null)
-                    .restore((processedSubj, subjInfo) -> Color.RED);
+                    .restore((processedSubj, subjInfo) -> Color.RED, null);
         }
 
     }
 
     /**
      * Tests exception
-     * Simplified version for non-serializable without {@link com.gdetotut.libs.jundo_droid_common.UndoPacket.OnRestore}
+     * Simplified version for non-serializable without {@link UndoPacket.OnRestore}
      */
     @Test
     public void testWithHandlers2() throws Exception {
 
         {
             Color color = new Color();
-            UndoStack stack = new UndoStack(color, null);
+            UndoStack stack = new UndoStack(color);
             String str = UndoPacket
                     .make(stack, "", 1)
                     .onStore(new UndoPacket.OnStore() {
@@ -259,7 +286,7 @@ public class UndoPacket_AgainTest {
                     .store();
             thrown.expect(Exception.class);
             // We need handler here 'cause we store with handler
-            UndoPacket.peek(str, null).restore(null);
+            UndoPacket.peek(str, null).restore(null, null);
             thrown = ExpectedException.none();
         }
 
@@ -267,14 +294,14 @@ public class UndoPacket_AgainTest {
 
     /**
      * Tests exception
-     * - Simplified version for serializable without {@link com.gdetotut.libs.jundo_droid_common.UndoPacket.OnRestore}
+     * - Simplified version for serializable without {@link UndoPacket.OnRestore}
      */
     @Test
     public void testWithHandlers3() throws Exception {
 
         {
             Point pt = new Point(1, 2);
-            UndoStack stack = new UndoStack(pt, null);
+            UndoStack stack = new UndoStack(pt);
             // Here handler is redundant, only for illustrating pair OnStore/OnRestore
             String str = UndoPacket
                     .make(stack, "", 1)
@@ -287,7 +314,7 @@ public class UndoPacket_AgainTest {
                     .store();
             thrown.expect(Exception.class);
             // We need handler here 'cause we store with handler
-            UndoPacket.peek(str, null).restore(null);
+            UndoPacket.peek(str, null).restore(null, null);
             thrown = ExpectedException.none();
         }
 
@@ -297,7 +324,7 @@ public class UndoPacket_AgainTest {
     public void testNew() throws Exception {
 
         Point pt = new Point(1, 2);
-        UndoStack stack = new UndoStack(pt, null);
+        UndoStack stack = new UndoStack(pt);
         // Here handler is redundant, only for illustrating pair OnStore/OnRestore
         String str = UndoPacket
                 .make(stack, "", 1)
@@ -307,12 +334,12 @@ public class UndoPacket_AgainTest {
         SubjInfo subjInfo = UndoPacket.peek(str, p -> p.id.equals("abc")).subjInfo;
         UndoPacket packet = UndoPacket
                 .peek(str, it -> it.id.equals("abc"))
-                .restore((processedSubj, it) -> "");
+                .restore((processedSubj, it) -> "", () -> new UndoStack(pt));
         UndoStack stack1 = UndoPacket
                 .peek(str, it -> it.id.equals("abc"))
-                .restore((processedSubj, it) -> "")
-                .stack((s, si) -> {
-                    if (si.version == 2) {
+                .restore((processedSubj, it) -> "", () -> new UndoStack(pt))
+                .stack((s, si, r) -> {
+                    if (si != null && si.version == 2) {
                         s.getLocalContexts().put("a", "aa");
                         s.getLocalContexts().put("b", "bb");
                     }
