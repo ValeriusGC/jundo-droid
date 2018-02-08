@@ -22,6 +22,7 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.gdetotut.libs.jundo_droid_common.UndoCommand;
 import com.gdetotut.libs.jundo_droid_common.UndoWatcher;
 import com.gdetotut.libs.jundo_droidsample.R;
 import com.gdetotut.libs.jundo_droidsample.commons.Fab;
@@ -185,6 +186,14 @@ public class MainActivity extends MvpAppCompatActivity
                 break;
             case R.id.menu_drop_macro:
                 presenter.undoStack.dropMacro();
+            case R.id.menu_play_macro:
+                try {
+                    UndoCommand macro = presenter.undoStack.clone(presenter.undoStack.getMacro(0));
+                    presenter.undoStack.push(macro);
+                } catch (Exception e) {
+                    Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                    System.err.println(e.getLocalizedMessage());
+                }
                 break;
         }
         return super.onOptionsItemSelected(item);
