@@ -27,8 +27,8 @@ public class ExampleUnitTest {
         assertEquals(10, pt.getX());
         assertEquals(20, pt.getY());
 
-        UndoStack stack = new UndoStack(pt, null);
-        stack.push(new RefCmd<>(stack, "Change x", pt::getX, pt::setX, 33, null));
+        UndoStack stack = new UndoStack(pt);
+        stack.push(new RefCmd<>("Change x", pt::getX, pt::setX, 33));
         assertEquals(33, pt.getX());
 
         String store = UndoPacket
@@ -37,7 +37,7 @@ public class ExampleUnitTest {
 
         UndoStack stack1 = UndoPacket
                 .peek(store, subjInfo -> "com.gdetotut.libs.jundo_droidsample.Point".equals(subjInfo.id))
-                .restore(null)
+                .restore(null, () -> new UndoStack(pt))
                 .stack(null);
 
         Point pt1 = (Point) stack1.getSubj();

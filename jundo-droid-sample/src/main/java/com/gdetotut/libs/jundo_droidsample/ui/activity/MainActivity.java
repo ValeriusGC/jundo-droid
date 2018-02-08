@@ -179,7 +179,7 @@ public class MainActivity extends MvpAppCompatActivity
                 break;
             case R.id.menu_start_macro:
                 presenter.undoStack.beginMacro(String.format(Locale.getDefault(),"macro #%d",
-                        presenter.undoStack.macroCount()));
+                        presenter.undoStack.getMacros().size()));
                 break;
             case R.id.menu_stop_macro:
                 presenter.undoStack.endMacro();
@@ -188,7 +188,7 @@ public class MainActivity extends MvpAppCompatActivity
                 presenter.undoStack.dropMacro();
             case R.id.menu_play_macro:
                 try {
-                    UndoCommand macro = presenter.undoStack.clone(presenter.undoStack.getMacro(0));
+                    UndoCommand macro = presenter.undoStack.clone(presenter.undoStack.getMacros().get(0));
                     presenter.undoStack.push(macro);
                 } catch (Exception e) {
                     Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
@@ -289,7 +289,7 @@ public class MainActivity extends MvpAppCompatActivity
                         public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                             presenter.closeDlg();
                             try {
-                                presenter.undoStack.push(new RemoveItemUndo(presenter.undoStack, "remove", notes));
+                                presenter.undoStack.push(new RemoveItemUndo("remove", notes));
                             } catch (Exception e) {
                                 System.err.println(e.getLocalizedMessage());
                             }

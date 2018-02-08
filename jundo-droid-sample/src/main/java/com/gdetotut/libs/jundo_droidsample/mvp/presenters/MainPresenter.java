@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
+import com.gdetotut.libs.jundo_droid_common.CreatorException;
 import com.gdetotut.libs.jundo_droid_common.UndoPacket;
 import com.gdetotut.libs.jundo_droid_common.UndoStack;
 import com.gdetotut.libs.jundo_droidsample.App;
@@ -71,18 +72,17 @@ public class MainPresenter extends MvpPresenter<MainView> {
         App.getAppComponent().inject(this);
 
         SharedPreferences sp = ctx.getSharedPreferences(TAG, Context.MODE_PRIVATE);
-        String s = sp.getString(UNDO_KEY, null);
         try {
             undoStack = UndoPacket
-                    .peek(s, subjInfo -> subjInfo.id.equals(TAG))
-                    .restore(null)
-                    .stack(null);
-        } catch (Exception e) {
+                    .peek(sp.getString(UNDO_KEY, null), subjInfo -> subjInfo.id.equals(TAG))
+                    .restore(null, () -> new UndoStack(""))
+                    .stack((stack, subjInfo, result) -> {
+                        stack.getLocalContexts().put(MainUndoCtrl.LC_PRES, this);
+                    });
+        } catch (CreatorException e) {
             System.err.println(e.getLocalizedMessage());
-            undoStack = new UndoStack("", null);
         }
 
-        undoStack.getLocalContexts().put(MainUndoCtrl.LC_PRES, this);
     }
 
     @Override

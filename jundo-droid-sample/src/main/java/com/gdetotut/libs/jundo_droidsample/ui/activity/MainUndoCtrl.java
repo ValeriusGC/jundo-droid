@@ -33,8 +33,8 @@ public class MainUndoCtrl implements Serializable {
         final String json;
         List<TypeOf.Oid> oids = new ArrayList<>();
 
-        public RemoveItemUndo(UndoStack owner, String caption, List<BriefNote> notes) {
-            super(owner, caption, null);
+        public RemoveItemUndo(String caption, List<BriefNote> notes) {
+            super(caption);
             for (BriefNote n : notes) {
                 oids.add(n.getOid());
             }
@@ -46,7 +46,7 @@ public class MainUndoCtrl implements Serializable {
         protected void doRedo() {
             Log.d(MainActivity.TAG, "RemoveItemUndo.doRedo");
             try{
-                MainPresenter mp = (MainPresenter) owner.getLocalContexts().get(LC_PRES);
+                MainPresenter mp = (MainPresenter) getOwner().getLocalContexts().get(LC_PRES);
                 Log.d(MainActivity.TAG, "RemoveItemUndo.doRedo: " + mp);
                 mp.delByOids(oids);
                 Log.d(MainActivity.TAG, "RemoveItemUndo.mp.delByOids(oids)");
@@ -60,7 +60,7 @@ public class MainUndoCtrl implements Serializable {
         protected void doUndo() {
             Log.d(MainActivity.TAG, "RemoveItemUndo.doUndo");
             try{
-                MainPresenter mp = (MainPresenter) owner.getLocalContexts().get(LC_PRES);
+                MainPresenter mp = (MainPresenter) getOwner().getLocalContexts().get(LC_PRES);
                 Type listType = new TypeToken<ArrayList<BriefNote>>(){}.getType();
                 List<BriefNote> notes = new Gson().fromJson(json, listType);
                 mp.add(notes);
