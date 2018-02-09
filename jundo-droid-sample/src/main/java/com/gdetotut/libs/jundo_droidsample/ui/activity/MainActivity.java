@@ -179,7 +179,7 @@ public class MainActivity extends MvpAppCompatActivity
                 break;
             case R.id.menu_start_macro:
                 presenter.undoStack.beginMacro(String.format(Locale.getDefault(),"macro #%d",
-                        presenter.undoStack.getMacros().size()));
+                        presenter.undoStack.getMacroCount()));
                 break;
             case R.id.menu_stop_macro:
                 presenter.undoStack.endMacro();
@@ -188,7 +188,7 @@ public class MainActivity extends MvpAppCompatActivity
                 presenter.undoStack.dropMacro();
             case R.id.menu_play_macro:
                 try {
-                    UndoCommand macro = presenter.undoStack.clone(presenter.undoStack.getMacros().get(0));
+                    UndoCommand macro = presenter.undoStack.clone(presenter.undoStack.cloneMacro(0));
                     presenter.undoStack.push(macro);
                 } catch (Exception e) {
                     Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();

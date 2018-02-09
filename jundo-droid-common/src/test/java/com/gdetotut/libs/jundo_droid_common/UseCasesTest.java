@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droid_common;
 
+import com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult;
 import com.gdetotut.libs.jundo_droid_common.some.TextSample;
 import com.gdetotut.libs.jundo_droid_common.some.TimeMachineCommands;
 import com.gdetotut.libs.jundo_droid_common.some.TimeMachineCommands.AddNewLineCmd;
@@ -103,8 +104,7 @@ public class UseCasesTest {
         System.out.println("testTimeMachine. Step 2:");
         System.out.println(doc.print());
 
-
-        //----------------
+        //--------------------------------------------------------------------------------------------------------------
         // Make repacking for fun
         String pack = UndoPacket
                 .make(stack, TimeMachineCommands.SUBJ_ID, 1)
@@ -123,13 +123,14 @@ public class UseCasesTest {
                 }, () -> new UndoStack(new TextSample())) // Very recommend to provide default UndoStack creator!
                 // Good practice to check code and make smth when it is error.
                 .stack((stack2, subjInfo, result) -> {
-                    if(result.code != UndoPacket.UnpackResult.UPR_Success) {
+                    if(result.code != UnpackResult.UPR_Success) {
                         System.err.println(result.msg);
                     }
                 });
         // As subject in restored stack is not the same we need to replace it.
         doc = (TextSample) stack1.getSubj();
         // ~Make repacking for fun
+        //--------------------------------------------------------------------------------------------------------------
 
         //--------------------------
         // Step 3. Add another 3 steps from 'current time'

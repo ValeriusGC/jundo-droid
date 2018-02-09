@@ -3,7 +3,6 @@ package com.gdetotut.libs.jundo_droidsample.mvp.presenters;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.Preference;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -21,17 +20,10 @@ import com.gdetotut.libs.jundo_droidsample.mvp.views.MainView;
 import com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity;
 import com.gdetotut.libs.jundo_droidsample.ui.activity.MainActivity;
 import com.gdetotut.libs.jundo_droidsample.ui.activity.MainUndoCtrl;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.function.Predicate;
 
 import javax.inject.Inject;
 
