@@ -12,6 +12,7 @@
     <string name="stop_macro">stop macro</string>
     <string name="drop_macro">drop macro</string>
     <string name="play_macro">play macro</string>
-
+    <string name="detail_title_hint">Put here a title</string>
+    <string name="detail_text_hint">Put here a text</string>
 
 </resources>

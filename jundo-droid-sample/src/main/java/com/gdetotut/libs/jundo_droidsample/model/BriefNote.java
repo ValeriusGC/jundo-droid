@@ -13,11 +13,13 @@ public class BriefNote implements Serializable {
     private final TypeOf.Oid oid;
     private Long mTime;
     private String mTitle;
+    private String text;
 
-    public BriefNote(TypeOf.Oid oid, Long mTime, String mTitle) {
+    public BriefNote(TypeOf.Oid oid, Long mTime, String mTitle, String text) {
         this.oid = oid;
         this.mTime = mTime;
         this.mTitle = mTitle;
+        this.text = text;
     }
 
     public TypeOf.Oid getOid() {
@@ -30,6 +32,18 @@ public class BriefNote implements Serializable {
 
     public String getTitle() {
         return mTitle;
+    }
+
+    public void setTitle(String mTitle) {
+        this.mTitle = mTitle;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
     @Override

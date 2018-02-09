@@ -58,7 +58,7 @@ public class BriefNoteManager {
             for(int i=0; i<count; ++i) {
                 final long time = startTime + twoHours * i;
                 final TypeOf.Oid oid = TypeOf.Oid.generate();
-                final BriefNote briefNote = new BriefNote(oid, time, "note: " + i);
+                final BriefNote briefNote = new BriefNote(oid, time, "note: " + i, "");
                 notes.put(oid.getValue(), briefNote);
             }
         }
@@ -101,8 +101,17 @@ public class BriefNoteManager {
         Log.d(MainActivity.TAG, "BriefNoteManager::add " + notes.size());
         while (notes.size() > 0) {
             BriefNote n = notes.remove(0);
-            BriefNote note = new BriefNote(n.getOid(), n.getTime(), n.getTitle());
+            BriefNote note = new BriefNote(n.getOid(), n.getTime(), n.getTitle(), n.getText());
             Log.d(MainActivity.TAG, "BriefNoteManager::add note " + note);
+            this.notes.put(note.getOid().getValue(), note);
+        }
+        save();
+    }
+
+    public void save(List<BriefNote> notes) {
+        for(int i = 0; i < notes.size(); ++i) {
+            BriefNote n = notes.get(i);
+            BriefNote note = new BriefNote(n.getOid(), n.getTime(), n.getTitle(), n.getText());
             this.notes.put(note.getOid().getValue(), note);
         }
         save();

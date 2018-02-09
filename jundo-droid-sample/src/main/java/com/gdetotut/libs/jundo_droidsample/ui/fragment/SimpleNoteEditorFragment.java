@@ -1,6 +1,7 @@
 package com.gdetotut.libs.jundo_droidsample.ui.fragment;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,9 +29,9 @@ public class SimpleNoteEditorFragment extends MvpAppCompatFragment implements Si
     }
 
     @Override
-    public View onCreateView(final LayoutInflater inflater, final ViewGroup container,
+    public View onCreateView(@NonNull final LayoutInflater inflater, final ViewGroup container,
                              final Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_simple_note_editor, container, false);
+        return inflater.inflate(R.layout.content_note, container, false);
     }
 
     @Override

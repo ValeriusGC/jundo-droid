@@ -10,14 +10,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
-        <activity android:name="com.gdetotut.libs.jundo_droidsample.ui.activity.MainActivity">
+        <activity android:name=".ui.activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.gdetotut.libs.jundo_droidsample.ui.activity.EditModeActivity">
+        <activity android:name=".ui.activity.EditModeActivity">
+        </activity>
+        <activity android:name=".ui.activity.Main2Activity">
         </activity>
     </application>
 

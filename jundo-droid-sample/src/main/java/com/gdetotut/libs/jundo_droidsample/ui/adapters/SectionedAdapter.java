@@ -15,7 +15,6 @@ import org.zakariya.stickyheaders.SectioningAdapter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,13 +48,15 @@ public class SectionedAdapter extends SectioningAdapter {
     /**
      * Part of more base class BriefNote
      */
-    private static class Item {
-        final TypeOf.Oid oid;
+    public static class Item {
+        final public TypeOf.Oid oid;
         final String title;
+        final String text;
 
-        public Item(TypeOf.Oid oid, String title) {
+        public Item(TypeOf.Oid oid, String title, String text) {
             this.oid = oid;
             this.title = title;
+            this.text = text;
         }
 
         @Override
@@ -130,7 +131,7 @@ public class SectionedAdapter extends SectioningAdapter {
         if(notes.size() > 0){
             for (int i=0; i< notes.size(); ++i) {
                 BriefNote note = notes.get(i);
-                Item item = new Item(note.getOid(), note.getTitle());
+                Item item = new Item(note.getOid(), note.getTitle(), note.getText());
                 Date date = new Date(note.getTime());
                 SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 String cap = sdfDate.format(date);
@@ -190,7 +191,7 @@ public class SectionedAdapter extends SectioningAdapter {
         ItemViewHolder ivh = (ItemViewHolder) viewHolder;
         Item item = s.items.get(itemIndex);
         ((ItemViewHolder) viewHolder).itemView.setTag(item);
-        ivh.personNameTextView.setText(item.title);
+        ivh.personNameTextView.setText(String.format("%s:%s", item.title, item.text) );
         System.out.println("I.getAdapterPosition():" + viewHolder.getAdapterPosition());
     }
 

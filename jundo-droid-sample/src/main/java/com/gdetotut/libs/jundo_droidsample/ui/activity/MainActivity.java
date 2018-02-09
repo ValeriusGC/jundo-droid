@@ -24,6 +24,7 @@ import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.gdetotut.libs.jundo_droid_common.UndoCommand;
 import com.gdetotut.libs.jundo_droid_common.UndoWatcher;
+import com.gdetotut.libs.jundo_droidsample.App;
 import com.gdetotut.libs.jundo_droidsample.R;
 import com.gdetotut.libs.jundo_droidsample.commons.Fab;
 import com.gdetotut.libs.jundo_droidsample.commons.ItemClickSupport;
@@ -107,6 +108,7 @@ public class MainActivity extends MvpAppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getContentViewLayout());
+        App.getAppComponent().inject(this);
         ButterKnife.bind(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -152,6 +154,13 @@ public class MainActivity extends MvpAppCompatActivity
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume");
+        presenter.resume();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.manu_main, menu);
         return true;
@@ -188,8 +197,9 @@ public class MainActivity extends MvpAppCompatActivity
                 presenter.undoStack.dropMacro();
             case R.id.menu_play_macro:
                 try {
-                    UndoCommand macro = presenter.undoStack.clone(presenter.undoStack.cloneMacro(0));
-                    presenter.undoStack.push(macro);
+                    UndoCommand macro = presenter.undoStack.cloneMacro(0);
+                    if(macro != null)
+                        presenter.undoStack.push(macro);
                 } catch (Exception e) {
                     Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                     System.err.println(e.getLocalizedMessage());
@@ -205,8 +215,16 @@ public class MainActivity extends MvpAppCompatActivity
         int sectionIndex = adapter.getSectionForAdapterPosition(adapterPosition);
         int itemIndex = adapter.getPositionOfItemInSection(sectionIndex, adapterPosition);
         Object o = v.getTag();
-//        BriefNote note = (BriefNote)o;
         Toast.makeText(this, "MainActivity.onListItemClicked: " + o, Toast.LENGTH_SHORT).show();
+
+        SectionedAdapter.Item item = (SectionedAdapter.Item)o;
+        Intent intent = new Intent(this, EditModeActivity.class);
+        intent.putExtra("oid", item.oid.getValue());
+        startActivity(intent);
+
+//        Intent intent = new Intent(this, Main2Activity.class);
+//        startActivity(intent);
+
     }
 
     /**

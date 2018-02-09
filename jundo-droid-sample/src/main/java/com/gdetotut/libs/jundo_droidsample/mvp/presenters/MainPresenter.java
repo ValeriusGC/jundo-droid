@@ -227,4 +227,7 @@ public class MainPresenter extends MvpPresenter<MainView> {
         loadData();
     }
 
+    public void resume() {
+        loadData();
+    }
 }
