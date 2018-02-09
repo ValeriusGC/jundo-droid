@@ -38,7 +38,7 @@ public class ExampleUnitTest {
         UndoStack stack1 = UndoPacket
                 .peek(store, subjInfo -> "com.gdetotut.libs.jundo_droidsample.Point".equals(subjInfo.id))
                 .restore(null, () -> new UndoStack(pt))
-                .stack(null);
+                .prepare(null);
 
         Point pt1 = (Point) stack1.getSubj();
         stack1.undo();

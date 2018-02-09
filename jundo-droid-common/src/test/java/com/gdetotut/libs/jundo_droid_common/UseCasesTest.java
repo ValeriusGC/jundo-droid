@@ -122,7 +122,7 @@ public class UseCasesTest {
                     return textSample;
                 }, () -> new UndoStack(new TextSample())) // Very recommend to provide default UndoStack creator!
                 // Good practice to check code and make smth when it is error.
-                .stack((stack2, subjInfo, result) -> {
+                .prepare((stack2, subjInfo, result) -> {
                     if(result.code != UnpackResult.UPR_Success) {
                         System.err.println(result.msg);
                     }

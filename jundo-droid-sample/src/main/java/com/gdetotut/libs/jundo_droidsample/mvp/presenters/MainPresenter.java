@@ -68,7 +68,7 @@ public class MainPresenter extends MvpPresenter<MainView> {
             undoStack = UndoPacket
                     .peek(sp.getString(UNDO_KEY, null), subjInfo -> subjInfo.id.equals(TAG))
                     .restore(null, () -> new UndoStack(""))
-                    .stack((stack, subjInfo, result) -> {
+                    .prepare((stack, subjInfo, result) -> {
                         stack.getLocalContexts().put(MainUndoCtrl.LC_PRES, this);
                     });
         } catch (CreatorException e) {

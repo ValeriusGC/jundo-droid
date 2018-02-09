@@ -59,7 +59,7 @@ public class UndoStackTest implements Serializable {
         UndoStack stackBack = UndoPacket
                 .peek(store, null)
                 .restore(null, null)
-                .stack(null);
+                .prepare(null);
 
         // Here we can not compare stacks themselves 'cause of stack's comparison principle
         assertEquals(stack.getSubj(), stackBack.getSubj());
@@ -243,7 +243,7 @@ public class UndoStackTest implements Serializable {
                 // When we have no handler, we need to specify it explicitly.
                 .peek(store, null)
                 .restore(null, null)
-                .stack(null);
+                .prepare(null);
 
         Point ptBack = (Point) stackBack.getSubj();
         assertEquals(pt, ptBack);
@@ -628,7 +628,7 @@ public class UndoStackTest implements Serializable {
                     // When we have no handlers, we still need to specify it explicitly.
                     .peek(store, null)
                     .restore(null, null)
-                    .stack(null);
+                    .prepare(null);
 
 
 //            assertEquals(stack, stackBack);
@@ -733,7 +733,7 @@ public class UndoStackTest implements Serializable {
                     // When we have no handlers, we still need to specify it explicitly.
                     .peek(store, null)
                     .restore(null, null)
-                    .stack(null);
+                    .prepare(null);
 
             NonTrivialClass objBack = (NonTrivialClass) stackBack.getSubj();
 
@@ -922,7 +922,7 @@ public class UndoStackTest implements Serializable {
                     // Always return null for unexpected code.
                     return SUBJ_ID.equals(subjInfo.id) ? (ArrayList<String>) processedSubj : null;
                 }, null)
-                .stack((stack2, subjInfo, result) -> {
+                .prepare((stack2, subjInfo, result) -> {
                     stack2.getLocalContexts().put(TextSampleCommands.TEXT_CTX_KEY, subj1);
                     subj1.clear();
                     subj1.text.addAll((ArrayList<String>) stack2.getSubj());
