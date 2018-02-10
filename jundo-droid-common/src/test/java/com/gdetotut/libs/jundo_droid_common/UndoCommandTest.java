@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droid_common;
 
+import com.gdetotut.libs.jundo_droid_common.some.BaseTest;
 import com.gdetotut.libs.jundo_droid_common.some.Point;
 import com.gdetotut.libs.jundo_droid_common.some.UndoCmdStub;
 
@@ -12,7 +13,7 @@ import org.junit.rules.ExpectedException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class UndoCommandTest {
+public class UndoCommandTest extends BaseTest {
 
     Point subj = null;
     UndoStack stack = null;

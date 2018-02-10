@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droid_common;
 
+import com.gdetotut.libs.jundo_droid_common.some.BaseTest;
 import com.gdetotut.libs.jundo_droid_common.some.Point;
 import com.gdetotut.libs.jundo_droid_common.some.SimpleClass;
 
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class UndoGroupTest {
+public class UndoGroupTest extends BaseTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();

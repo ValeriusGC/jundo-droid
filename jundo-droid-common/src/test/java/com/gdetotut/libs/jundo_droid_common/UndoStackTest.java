@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droid_common;
 
+import com.gdetotut.libs.jundo_droid_common.some.BaseTest;
 import com.gdetotut.libs.jundo_droid_common.some.NonTrivialClass;
 import com.gdetotut.libs.jundo_droid_common.some.Point;
 import com.gdetotut.libs.jundo_droid_common.some.SimpleClass;
@@ -23,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class UndoStackTest implements Serializable {
+public class UndoStackTest extends BaseTest implements Serializable {
 
     UndoStack stack;
     Object[] arr;

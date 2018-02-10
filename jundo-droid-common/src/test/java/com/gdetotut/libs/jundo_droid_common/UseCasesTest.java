@@ -1,6 +1,7 @@
 package com.gdetotut.libs.jundo_droid_common;
 
 import com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult;
+import com.gdetotut.libs.jundo_droid_common.some.BaseTest;
 import com.gdetotut.libs.jundo_droid_common.some.TextSample;
 import com.gdetotut.libs.jundo_droid_common.some.TimeMachineCommands;
 import com.gdetotut.libs.jundo_droid_common.some.TimeMachineCommands.AddNewLineCmd;
@@ -22,7 +23,7 @@ import static org.junit.Assert.assertEquals;
  *
  * <p>@see SNAPSHOT on <a href="https://github.com/ValeriusGC/jundo/tree/feat_ver2">https://github.com/ValeriusGC/jundo/tree/feat_ver2</a>
  */
-public class UseCasesTest {
+public class UseCasesTest extends BaseTest {
 
     /**
      * This test emulates 'Time Machine' behaviour, i.e. we can do moving across commands by their time periods.

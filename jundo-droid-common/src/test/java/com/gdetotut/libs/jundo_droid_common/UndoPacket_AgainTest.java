@@ -3,12 +3,16 @@ package com.gdetotut.libs.jundo_droid_common;
 import android.graphics.Color;
 
 import com.gdetotut.libs.jundo_droid_common.UndoPacket.SubjInfo;
+import com.gdetotut.libs.jundo_droid_common.some.BaseTest;
 import com.gdetotut.libs.jundo_droid_common.some.Point;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import static com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult.UPR_NewStack;
 import static com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult.UPR_PeekRefused;
@@ -16,7 +20,7 @@ import static com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult.UPR_S
 import static com.gdetotut.libs.jundo_droid_common.UndoPacket.UnpackResult.UPR_WrongCandidate;
 import static org.junit.Assert.*;
 
-public class UndoPacket_AgainTest {
+public class UndoPacket_AgainTest extends BaseTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();

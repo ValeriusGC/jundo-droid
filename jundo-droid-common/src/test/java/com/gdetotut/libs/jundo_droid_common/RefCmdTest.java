@@ -1,5 +1,6 @@
 package com.gdetotut.libs.jundo_droid_common;
 
+import com.gdetotut.libs.jundo_droid_common.some.BaseTest;
 import com.gdetotut.libs.jundo_droid_common.some.Point;
 
 import org.junit.Assert;
@@ -8,7 +9,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class RefCmdTest {
+public class RefCmdTest extends BaseTest {
 
     Point subj = null;
     UndoStack stack = null;
